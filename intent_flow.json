@@ -1,0 +1,203 @@
+[
+    {
+        "intent":"NewCustomer",
+        "actions":[
+                {
+                   
+                    "responses":[
+                                    [{
+                                        "text":"Hi {{user_first_name}}, Welcome to SmartGovt. I am a chatbot. What can i do for you?",
+                                        "responseType":"Text"
+                                    }]
+                
+                    ]
+                }
+        ]
+        
+    },
+    {
+        "intent":"Greeting",
+        "actions":[
+                {
+                
+                    "responses":[
+                            [{
+                                "text":"Hey {{user_first_name}}, How may i help you?",
+                                "responseType":"Text"
+                             },{
+                                "text":"Hi {{user_first_name}}, I am a chatbot. What can i do for you?",
+                                "responseType":"Text"
+                             }]
+                           
+                    ]     
+                }  
+        ]
+        
+    },
+    {
+        "intent":"Thankyou",
+        "actions":[
+                {
+                
+                    "responses":[
+                            [{
+                                "text":"Its my pleasure",
+                                "responseType":"Text"
+                             },{
+                                "text":"Hi {{user_first_name}}, I am a chatbot. What can i do for you?",
+                                "responseType":"Text"
+                             }]
+                           
+                    ]     
+                }  
+        ]
+        
+    },
+    {
+        "intent":"RenewVisa",
+        "actions": [
+                    {
+                        "entity": ["family","wife","kids","kid","daughter","son","children"],
+                        "entityTypesRequired":["RenewVisaPerson"],
+                        "responses":[
+                                [{
+                                    "text":"Ok Great. I will guide you about renewing visa for your {{RenewVisaPerson.entity}}",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"Renewing visa is a two step process",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"Step 1 - Medical examination from authorized medical centers",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"Step 2 - Submitting renewal application along with required documents",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"Below is the list of documents you will be needed:",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#1 a copy of the husband's/wife’s employment contract or company contract for investors",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#2 a salary certificate from the employer stating the employee's monthly salary",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#3 a registered tenancy contract",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#4 latest utility bill",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#5 passport copy of yours",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#6 Original passport and copy of sponsored person",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#7 2 photographs of yours",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"#8 Medical Test from authorized center",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"If you are ready, i can book an appointment for medical test and visa application at a location close to you",
+                                    "responseType":"QuickReply",
+                                    "options":[
+                                        {
+                                            "title":"Medical Test",
+                                            "payload":"RenewVisa.AppointmentForMedical",
+                                            "content_type":"text"
+                                        },
+                                        {
+                                            "title":"Visa App Submission",
+                                            "payload":"RenewVisa.AppointmentForVisaApp",
+                                            "content_type":"text"
+                                        }
+                                    ]
+                                }]
+                            
+                        ]
+                    },
+                    {
+                        "entity":["me","my"],
+                        "entityTypesRequired":["RenewVisaPerson"],
+                        "responses":[
+                                [{
+                                    "text":"Hey {{user_first_name}}, How may i help you?",
+                                    "responseType":"Text"
+                                },{
+                                    "text":"Hi {{user_first_name}}, I am a chatbot. What can i do for you?",
+                                    "responseType":"Text"
+                                }]
+                            
+                        ]
+                    }
+        ],
+        "exceptionActions":[
+                                {
+                                    "entityTypeMissing" : ["RenewVisaPerson"],
+                                    "responses":[
+                                                    {
+                                                        "text":"Ok. I will guide you for visa renewal. Are you looking for yourself or for your family",
+                                                        "responseType":"QuickReply",
+                                                        "contentType":"Text",
+                                                        "payload":"RenewVisa"
+                                                    }
+                                    ]
+                                    
+                                }                        
+        ]
+       
+    },
+    {
+        "intent":"RenewVisa.AppointmentForMedical",
+        "intentImportance":"ServiceSelection",
+        "actions": [
+                    {
+                        "responses":[
+                                [{
+                                    "text":"Let me help you to book an appointment. Please share your location so i can find nearest medical centers",
+                                    "responseType":"QuickReply",
+                                    "options":[
+                                        {
+                                            "payload":"RenewVisa.AppointmentForVisaApp.MedicalCenters",
+                                            "content_type":"location"
+                                        }
+                                    ]
+                                    
+                                }]
+                            
+                        ]
+                    }
+        ]
+       
+    },
+    {
+        "intent":"RenewVisa.AppointmentForMedical.location",
+        "actions": [
+                    {
+                        "responses":[
+                                [{
+                                    "responseType":"ApiGatewayJson",
+                                    "processingFunction":"FindBranches"
+                                }]
+                            
+                        ]
+                    }
+        ]
+       
+    }
+]
