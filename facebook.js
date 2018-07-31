@@ -158,6 +158,73 @@ var sendQuickReply = (recipientId,text,response) => {
   callSendAPI(messageData);
 }
 
+/*
+ * Send a Structured Message (Generic Message type) using the Send API.
+ *
+ */
+var sendGenericMessage = (recipientId,list) => {
+
+  console.log("sendGenericMessage");
+  console.log("data -> " + JSON.stringify(list,undefined,2));
+
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "generic",
+          elements: []
+        }
+      }
+    }
+  };
+
+  list.forEach((item) => {
+    let element = {
+      title: item.title,
+      subtitle: item.subTitle,
+      item_url: item.url,
+      image_url: SERVER_URL + item.imageURL + '?time=43423432432',
+      buttons: []    
+    }
+
+    item.actions.forEach((action) => {
+      let button = {
+        type: action.type,
+        title: action.title,
+        payload: action.payload,
+      }
+      element.buttons.push(button);
+    });
+
+    messageData.message.attachment.payload.elements.push(element);
+
+  });
+
+  console.log("facebook compatible data -> " + JSON.stringify(messageData,undefined,2));
+
+  // {
+  //   title: "touch",
+  //   subtitle: "Your Hands, Now in VR",
+  //   item_url: "https://www.oculus.com/en-us/touch/",
+  //   image_url: SERVER_URL + "/assets/touch.png",
+  //   buttons: [{
+  //     type: "web_url",
+  //     url: "https://www.oculus.com/en-us/touch/",
+  //     title: "Open Web URL"
+  //   }, {
+  //     type: "postback",
+  //     title: "Call Postback",
+  //     payload: "Payload for second bubble",
+  //   }]
+  // }
+
+  callSendAPI(messageData);
+}
+
 // {
 //   "content_type":"text",
 //   "title":"Action",
@@ -178,4 +245,5 @@ module.exports.callSendAPI = callSendAPI;
 module.exports.sendTextMessage = sendTextMessage;
 module.exports.sendQuickReply = sendQuickReply;
 module.exports.retrieveUserProfile = retrieveUserProfile;
+module.exports.sendGenericMessage = sendGenericMessage;
 

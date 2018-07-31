@@ -1,11 +1,12 @@
 [
   {
     "userId": "1697938176985929",
-    "lastIntent": "RenewVisa",
-    "lastIntentDateTime": "2018-07-18T14:40:47+04:00",
+    "lastIntent": "RenewVisa.AppointmentForMedical.location",
+    "lastIntentDateTime": "2018-07-31T15:23:40+04:00",
     "attributes": {
       "selectedService": "Medical Test For Visa",
-      "selectedServicePublicId": "b86a840838a00c7436b0b12cb24ca77efd3a744d68fbca1e96f5a09cb76086ce"
+      "selectedServicePublicId": "b86a840838a00c7436b0b12cb24ca77efd3a744d68fbca1e96f5a09cb76086ce",
+      "selectedServiceInternalId": "7"
     }
   }
 ]

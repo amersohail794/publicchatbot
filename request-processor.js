@@ -8,8 +8,10 @@ const
   luis = require('./luis'),
   facebook = require('./facebook'),
   userConversation = require('./user-conversation'),
-  serviceMappings = require('./service-mapping.js');
+  serviceMappings = require('./service-mapping.js'),
+  orchestra = require('./orchestra'),
   NanoTimer = require('nanotimer');
+  
 
 const allServiceMappings = serviceMappings.loadAllMappings();
 
@@ -183,6 +185,31 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
       if (response.processingFunction === 'FindBranches'){
         var latitude = params.attachments[0].payload.coordinates.lat;
         var longitude = params.attachments[0].payload.coordinates.long;
+        var lastConversation  = userConversation.getUserConversation(params.userId);
+        let responsePromise = orchestra.retrieveData('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
+        responsePromise.then((branches) => {
+          var branchList = new Array();
+
+          branches.forEach((branch) => {
+            let branchData = {
+              title : branch.name,
+              subTitle : branch.addressLine1 + ', '+branch.addressLine4 + ', ' + branch.addressLine5,
+              imageURL : '/assets/'+branch.addressLine3,
+              actions : [] 
+            };
+
+            branchData.actions.push({type : 'postback', title : 'Select', payload : intentFlow.intent + '.selectedLocation.'+branch.id});
+            branchList.push(branchData);
+          });
+
+          facebook.sendGenericMessage(params.userId,branchList);
+        }).catch((error) => {
+          console.log("Error -> " + JSON.stringify(error,undefined,2));
+          facebook.sendTextMessage(params.userId,"There is problem in retrieving branches. Please try later");
+        });
+        
+        //facebook.sendTextMessage(params.userId,"FindBranches is not implemeneted yet");
+
 
       }
     }
@@ -199,6 +226,7 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
             if (allServiceMappings[i].utterance === params.utterance){
               attributes.set('selectedService',allServiceMappings[i].orchestraName);
               attributes.set('selectedServicePublicId',allServiceMappings[i].publicId);
+              attributes.set('selectedServiceInternalId',allServiceMappings[i].internalId);
               break;
             }
           }

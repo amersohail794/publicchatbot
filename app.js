@@ -255,6 +255,7 @@ function receivedMessage(event) {
     messageId : messageId
   }
 
+  console.log("Params: -> " + JSON.stringify(params,undefined,2));
   console.log(`Message: ${messageText}`);
 
 try{
@@ -405,7 +406,7 @@ function receivedPostback(event) {
   var recipientID = event.recipient.id;
   var timeOfPostback = event.timestamp;
  
-  console.log(`I am postback event ${event}`);
+  console.log(`Postback Event `, JSON.stringify(event,undefined,2));
  
   // The 'payload' param is a developer-defined field which is set in a postback
   // button for Structured Messages.
@@ -414,9 +415,17 @@ function receivedPostback(event) {
 	  console.log("Referernce ",event.postback.referral.ref);
   }
   else{
-    console.log("No reference found");
-    //greet user
-    requestProcessor.process("Hi",senderID);
+
+    if (payload == undefined){
+      console.log("New Customer");
+      //greet user
+      requestProcessor.process("Hi",senderID);
+    }
+    else{
+      //postback button with payload pressed
+      
+    }
+    
   }
 	  
 
