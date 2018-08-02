@@ -251,6 +251,7 @@ function receivedMessage(event) {
     utterance : messageText,
     attachments : messageAttachments,
     quickReply : quickReply,
+    postback : undefined,
     appId, appId,
     messageId : messageId
   }
@@ -411,6 +412,19 @@ function receivedPostback(event) {
   // The 'payload' param is a developer-defined field which is set in a postback
   // button for Structured Messages.
   var payload = event.postback.payload;
+
+  var params = {
+    userId : senderID,
+    timeOfMessage : timeOfPostback,
+    utterance : undefined,
+    attachments : undefined,
+    quickReply : undefined,
+    postback : undefined,
+    appId: undefined,
+    messageId : undefined 
+  }
+
+
   if (event.postback.referral != undefined){
 	  console.log("Referernce ",event.postback.referral.ref);
   }
@@ -419,11 +433,12 @@ function receivedPostback(event) {
     if (payload == undefined){
       console.log("New Customer");
       //greet user
-      requestProcessor.process("Hi",senderID);
+      requestProcessor.process({utterance:'Hi',userId: senderID});
     }
     else{
       //postback button with payload pressed
-      
+      params.postback = {'payload' : payload};
+      requestProcessor.processPostback(params);
     }
     
   }

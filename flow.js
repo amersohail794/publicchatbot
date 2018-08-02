@@ -15,10 +15,14 @@ var findFlow = (intent) =>{
         var flow = fetchAllFlows();
         var intentFlow;
         flow.forEach((flowRow) => {
-            if (flowRow.intent === intent){
-                intentFlow = flowRow;
-                
+            let matched = intent.match(new RegExp(flowRow.intent)); //matching regular expression based intent
+            if (matched){
+                intentFlow = flowRow;    
             }
+            // if (flowRow.intent === intent){
+            //     intentFlow = flowRow;
+                
+            // }
         })
         console.log("found flow ",intentFlow);
         resolve(intentFlow);

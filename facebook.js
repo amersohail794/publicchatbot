@@ -187,7 +187,7 @@ var sendGenericMessage = (recipientId,list) => {
       title: item.title,
       subtitle: item.subTitle,
       item_url: item.url,
-      image_url: SERVER_URL + item.imageURL + '?time=43423432432',
+      image_url: (item.imageURL.startsWith('http') ? item.imageURL : SERVER_URL + '/assets/' + item.imageURL) + '?time=43423432432',
       buttons: []    
     }
 

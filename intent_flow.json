@@ -199,5 +199,62 @@
                     }
         ]
        
+    },
+    {
+        "intent":"RenewVisa.AppointmentForMedical.location.selectedLocation.[0-9]",
+        "intentImportance":"BranchSelection",
+        "actions":[
+            {
+            
+                "responses":[
+                        [{
+                            "text":"Great! When and at what time you want to book appointment e.g. tomorrow at 12pm or wednesday at 10 or next thursday at 9?",
+                            "responseType":"Text"
+                         }
+                        ]
+                       
+                ]     
+            }  
+        ]
+       
+    },
+    {
+        "intent":"AppointmentDateTime",
+        "intentImportance":"AppointmentDateTimeSelection",
+        "lastIntent":"RenewVisa.AppointmentForMedical.location.selectedLocation.[0-9]",
+        "actions":[
+            {
+                "entityTypesRequired":["builtin.datetimeV2.datetime"],
+                "responses":[
+                        [{
+                            "responseType":"Text",
+                            "text":"Checking availability..."
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
+                            "processingFunction":"CheckAvailability"
+                        }],
+                        [{
+                            "text":"Great. We found booking slot for {{datetime.value}}. Please confirm to book it ",
+                            "responseType":"QuickReply",
+                            "options":[
+                                {
+                                    "title":"Confirm",
+                                    "payload":"RenewVisa.AppointmentForMedical.AppointmentConfirmed",
+                                    "content_type":"text"
+                                },
+                                {
+                                    "title":"No",
+                                    "payload":"RenewVisa.AppointmentForMedical.AppointmentNotConfirmed",
+                                    "content_type":"text"
+                                }
+                            ]
+                         }
+                        ]
+                       
+                ]     
+            }  
+        ]
+       
     }
 ]

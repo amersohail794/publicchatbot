@@ -12,6 +12,7 @@ var query = (utterance) => {
             var entityMap = new Map();
             response.data.entities.forEach((e) =>{
                 if (entityMap.has(e.type) && entityMap.get(e.type).score < e.score){
+                    
                     entityMap.set(e.type,e);
 
                     console.log("entity is updated in entityMap",e.type,e);
