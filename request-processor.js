@@ -181,11 +181,18 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
   let abc = 0;
   action.responses.forEach((row) =>{
     p = p.then(() => new Promise(resolve =>{
+
+        
         console.log(abc);
         // processNumber(1,resolve)
         let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
+        new Promise((res) => {
+          setTimeout(processingResponse.bind(null,res,response,params,profile,action,intentFlow,entityMap),1500);
+          // processingResponse(res,response,params,profile,action,intentFlow,entityMap);
+        }).then(() => {
+          collectingUserState(resolve,params,profile,action,intentFlow,entityMap);
+        });
         
-        processingResponse(resolve,response,params,profile,action,intentFlow,entityMap);
     }
     ));
     // console.log("I am done");
@@ -195,11 +202,11 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
 
 };
 
-var processNumber = ((number,resolve) => {
+// var processNumber = ((number,resolve) => {
     
-  setTimeout( () => resolve(2),number* 5000);
+//   setTimeout( () => resolve(2),number* 5000);
 
-});
+// });
 
 
 
@@ -256,8 +263,8 @@ var processingTextResponse = ((response,params,profile,action,intentFlow,entityM
     if (entityMap != undefined){
       for (let [entityType, entity] of entityMap.entries()) {
         // console.log("entity -> " + JSON.stringify(entity,undefined,2));
-        console.log(`Going to replace {{${entityType}.${entity.entity}}} with ${entity.entity}`);
-        txt = txt.replace(`{{${entityType}}}`,entity);
+        console.log(`Going to replace {{${entityType}.entity}} with ${entity.entity}`);
+        txt = txt.replace(`{{${entityType}.entity}}`,entity.entity);
       }
     }
     
@@ -270,8 +277,8 @@ var processingQuickReplyResponse = ((response,params,profile,action,intentFlow,e
     if (entityMap != undefined){
       for (let [entityType, entity] of entityMap.entries()) {
         // console.log("entity -> " + JSON.stringify(entity,undefined,2));
-        console.log(`Going to replace {{${entityType}}} with ${entity}`);
-        txt = txt.replace(`{{${entityType}}}`,entity);
+        console.log(`Going to replace {{${entityType}.entity}} with ${entity.entity}`);
+        txt = txt.replace(`{{${entityType}.entity}}`,entity.entity);
       }
     }
     facebook.sendQuickReply(params.userId,txt,response);
@@ -339,7 +346,8 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
           });
           if (slotFound){
             console.log("Setting datetime.value -> " + entityValue);
-            entityMap.set('datetime.value',entityValue);
+            let ent = {entity : entityValue};
+            entityMap.set('datetime.entity',ent);
           }
           resolve(true);
           

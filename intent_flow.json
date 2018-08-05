@@ -235,7 +235,7 @@
                             "processingFunction":"CheckAvailability"
                         }],
                         [{
-                            "text":"Great. We found booking slot for {{datetime.value}}. Please confirm to book it ",
+                            "text":"Great. We found booking slot for {{datetime.entity}}. Please confirm to book it ",
                             "responseType":"QuickReply",
                             "options":[
                                 {
