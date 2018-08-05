@@ -17,20 +17,24 @@ const allServiceMappings = serviceMappings.loadAllMappings();
 
 var process = (params) => {
   
+  return new Promise((resolve,reject) => {
+    
+    console.log("uttrerance ",params.utterance)
+    console.log("params " + JSON.stringify(params,undefined,2));
+    
+    userConversation.getUserConversation(params.userId)
+      .then((lastConversation) => {
+        console.log("LastConversation",lastConversation);
 
+        if (lastConversation == undefined)
+          flow.findFlow("NewCustomer").then(onFlowFound.bind(null,params,undefined));    
+        else{
+          luis.query(params.utterance).then(onLuisRespnose.bind(null,params)); //https://stackoverflow.com/questions/32912459/promises-pass-additional-parameters-to-then-chain
+        }
+    });
+    resolve(true);
 
-  console.log("uttrerance ",params.utterance)
-  console.log("params " + JSON.stringify(params,undefined,2));
-  
-
-  var lastConversation  = userConversation.getUserConversation(params.userId);
-  console.log("LastConversation",lastConversation);
-  if (lastConversation == undefined)
-      flow.findFlow("NewCustomer").then(onFlowFound.bind(null,params,undefined));    
-  else{
-      luis.query(params.utterance).then(onLuisRespnose.bind(null,params)); //https://stackoverflow.com/questions/32912459/promises-pass-additional-parameters-to-then-chain
-
-  }
+  });
 
 }
 
@@ -42,13 +46,23 @@ var processQuickReply = (params) => {
 }
 
 var processMessageAttachment = (params) => {
-  if (params.attachments[0].type === 'location'){
-    console.log("received user location");
-    var lastConversation  = userConversation.getUserConversation(params.userId);
-    flow.findFlow(lastConversation.lastIntent +'.location').then(onFlowFound.bind(null,params,undefined));
 
+  return new promise( (resolve,reject) => {
+    
+    if (params.attachments[0].type === 'location'){
+      console.log("received user location");
+      userConversation.getUserConversation(params.userId)
+        .then((lastConversation) => {
+          return flow.findFlow(lastConversation.lastIntent +'.location')
+        }).then((intentFlow) => {
+          onFlowFound(params,null,intentFlow);
+          resolve(true);
+        });
+   
+    }
+  })
 
-  }
+  
 }
 
 var processPostback = (params) => {
@@ -258,85 +272,127 @@ var collectingUserState = ((resolve,params,profile,action,intentFlow,entityMap) 
 });
 
 var processingTextResponse = ((response,params,profile,action,intentFlow,entityMap) => {
-  var txt = response.text;
-    txt = txt.replace('{{user_first_name}}',profile.first_name);
-    if (entityMap != undefined){
-      for (let [entityType, entity] of entityMap.entries()) {
-        // console.log("entity -> " + JSON.stringify(entity,undefined,2));
-        console.log(`Going to replace {{${entityType}.entity}} with ${entity.entity}`);
-        txt = txt.replace(`{{${entityType}.entity}}`,entity.entity);
-      }
-    }
-    
-    facebook.sendTextMessage(params.userId,txt);
-});
 
-var processingQuickReplyResponse = ((response,params,profile,action,intentFlow,entityMap) => {
+  return new Promise((resolve,reject) => {
     var txt = response.text;
     txt = txt.replace('{{user_first_name}}',profile.first_name);
     if (entityMap != undefined){
       for (let [entityType, entity] of entityMap.entries()) {
         // console.log("entity -> " + JSON.stringify(entity,undefined,2));
-        console.log(`Going to replace {{${entityType}.entity}} with ${entity.entity}`);
-        txt = txt.replace(`{{${entityType}.entity}}`,entity.entity);
+        if (entityType.startsWith('runtime')){
+          console.log(`Going to replace {{${entityType}}} with ${entity}`);
+          txt = txt.replace(`{{${entityType}}}`,entity);
+
+        }
+        else{
+          console.log(`Going to replace {{${entityType}.entity}} with ${entity.entity}`);
+          txt = txt.replace(`{{${entityType}.entity}}`,entity.entity);
+        }
       }
     }
-    facebook.sendQuickReply(params.userId,txt,response);
+    
+    facebook.sendTextMessage(params.userId,txt)
+      .then(_ => resolve(true))
+      .catch(() => reject("Could not send text response"));
+  });
+
+
+  
+});
+
+var processingQuickReplyResponse = ((response,params,profile,action,intentFlow,entityMap) => {
+    
+    return new Promise((resolve,reject) => {
+      var txt = response.text;
+      txt = txt.replace('{{user_first_name}}',profile.first_name);
+      if (entityMap != undefined){
+        for (let [entityType, entity] of entityMap.entries()) {
+          // console.log("entity -> " + JSON.stringify(entity,undefined,2));
+          if (entityType.startsWith('runtime')){
+            console.log(`Going to replace {{${entityType}}} with ${entity}`);
+            txt = txt.replace(`{{${entityType}}}`,entity);
+
+          }
+          else{
+            console.log(`Going to replace {{${entityType}.entity}} with ${entity.entity}`);
+            txt = txt.replace(`{{${entityType}.entity}}`,entity.entity);
+          }
+            
+            
+        }
+      }
+      facebook.sendQuickReply(params.userId,txt,response)
+        .then(_ => resolve(true))
+        .catch(() => reject("Could not send quick reply response"));
+    });
+    
 });
 
 var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intentFlow,entityMap) => {
   // console.log("I am insdie APIGateway")
   console.log(response.processingFunction);
   if (response.processingFunction === 'FindBranches'){
-    var latitude = params.attachments[0].payload.coordinates.lat;
-    var longitude = params.attachments[0].payload.coordinates.long;
-    var lastConversation  = userConversation.getUserConversation(params.userId);
-    let responsePromise = orchestra.retrieveData('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
-    return new Promise((resolve) => {
-    responsePromise.then((branches) => {
-      var branchList = new Array();
+    
+    return new Promise((resolve,reject) => {
 
-      branches.forEach((branch) => {
-        let branchData = {
-          title : branch.name,
-          subTitle : branch.addressLine1 + ', '+branch.addressLine4 + ', ' + branch.addressLine5,
-          imageURL : branch.addressLine3,
-          actions : [] 
-        };
+      var latitude = params.attachments[0].payload.coordinates.lat;
+      var longitude = params.attachments[0].payload.coordinates.long;
 
-        branchData.actions.push({type : 'postback', title : 'Select', payload : intentFlow.intent + '.selectedLocation.'+branch.id});
-        branchList.push(branchData);
+      userConversation.getUserConversation(params.userId).then((lastConversation) => {
+        return orchestra.retrieveData('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
+      }).then((branches) => { //process branches data
+        var branchList = new Array();
+
+        branches.forEach((branch) => {
+          let branchData = {
+            title : branch.name,
+            subTitle : branch.addressLine1 + ', '+branch.addressLine4 + ', ' + branch.addressLine5,
+            imageURL : branch.addressLine3,
+            actions : [] 
+          };
+
+          branchData.actions.push({type : 'postback', title : 'Select', payload : intentFlow.intent + '.selectedLocation.'+branch.id});
+          branchList.push(branchData);
+        });
+
+        return facebook.sendGenericMessage(params.userId,branchList);
+      
+      }).then(_ =>  resolve(true)) //acknowledged from facebook
+      .catch((error) => {
+        console.log("Error -> " + JSON.stringify(error,undefined,2));
+        facebook.sendTextMessage(params.userId,"There is problem in retrieving branches. Please try later");
+        reject("Error -> " + JSON.stringify(error,undefined,2));
       });
-
-      facebook.sendGenericMessage(params.userId,branchList);
-      resolve(true);
-    }).catch((error) => {
-      console.log("Error -> " + JSON.stringify(error,undefined,2));
-      facebook.sendTextMessage(params.userId,"There is problem in retrieving branches. Please try later");
-      resolve(false);
-    });
-  });
+    }); //ended promise execution
+    
+    
+   
+    // return new Promise((resolve) => {
+    // responsePromise.
+  // });
     //facebook.sendTextMessage(params.userId,"FindBranches is not implemeneted yet");
 
 
   }
   else if (response.processingFunction === 'CheckAvailability'){
       console.log("Checking Availability");
-      let ent = entityMap.get('builtin.datetimeV2.datetime');
-      console.log("entity -> " + JSON.stringify(ent,undefined,2));
-      let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
-      console.log("Entity Value -> " + entityValue);
-      let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
-      let date = valueParts[0]; //2017-05-02
-      let time = valueParts[1]; //08:00:00
-      let timeParts = time.split(':');
-      let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
-      console.log("TimeFormatted -> " + timeFormat);
-      var lastConversation  = userConversation.getUserConversation(params.userId);
-      let responsePromise = orchestra.retrieveData('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.attributes.selectedBranchPublicId,DATE: date})),'get');
-      return new Promise((resolve) => {
-        responsePromise.then((availableTimes) => {
-        
+
+      return new Promise((resolve,reject) => {
+
+        let ent = entityMap.get('builtin.datetimeV2.datetime');
+        console.log("entity -> " + JSON.stringify(ent,undefined,2));
+        let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
+        console.log("Entity Value -> " + entityValue);
+        let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
+        let date = valueParts[0]; //2017-05-02
+        let time = valueParts[1]; //08:00:00
+        let timeParts = time.split(':');
+        let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
+        console.log("TimeFormatted -> " + timeFormat);
+        userConversation.getUserConversation(params.userId).then((lastConversation) => {
+          return orchestra.retrieveData('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.attributes.selectedBranchPublicId,DATE: date})),'get');  
+        }).then((availableTimes) => {
+          
           let slotFound = false;
           availableTimes.times.forEach((t) => {
             if (t === timeFormat)
@@ -345,9 +401,9 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
             
           });
           if (slotFound){
-            console.log("Setting datetime.value -> " + entityValue);
-            let ent = {entity : entityValue};
-            entityMap.set('datetime.entity',ent);
+            console.log("Setting runtime.datetime.value -> " + entityValue);
+            
+            entityMap.set('runtime.datetime.value',entityValue);
           }
           resolve(true);
           
@@ -355,11 +411,17 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
         }).catch((error) => {
           console.log("Error -> " + JSON.stringify(error,undefined,2));
           facebook.sendTextMessage(params.userId,"There is problem in retrieving timeslots");
-          resolve(false);
+          reject("Error -> " + JSON.stringify(error,undefined,2));
         });
-      });
+      }) //end of promise
+      
+      
+      
 
       
+  }
+  else{
+    console.log("No APIGateway processing found")
   }
 });
 
@@ -368,24 +430,23 @@ var processingResponse = ((resolve,response,params,profile,action,intentFlow,ent
   console.log("Response Selected",JSON.stringify(response,undefined,2));
   if (response.responseType === 'Text'){
     console.log("ResponseType ",response.responseType);
-    processingTextResponse(response,params,profile,action,intentFlow,entityMap);
-    resolve(true);
+    processingTextResponse(response,params,profile,action,intentFlow,entityMap)
+      .then(_ => resolve(true));
+    // resolve(true);
     //setTimeout(facebook.sendTextMessage, 1200 * index++, params.userId, txt);
   }
   else if (response.responseType === 'QuickReply'){
     console.log("ResponseType ",response.responseType);
-    processingQuickReplyResponse(response,params,profile,action,intentFlow,entityMap);
-    resolve(true);
+    processingQuickReplyResponse(response,params,profile,action,intentFlow,entityMap)
+      .then(_ => resolve(true));
     // setTimeout(facebook.sendQuickReply, 1200 * index++, params.userId, txt,response);
    
   }
   else if (response.responseType === 'ApiGatewayJson'){
     console.log("ResponseType ",response.responseType);
-    let promise = processingApiGatewayJsonResponse(response,params,profile,action,intentFlow,entityMap);
-    promise.then(() => {
-      resolve(true);
-    })
-
+    processingApiGatewayJsonResponse(response,params,profile,action,intentFlow,entityMap)
+      .then(_ => resolve(true));
+   
   }
   else{
     facebook.sendTextMessage(params.userId,"Sorry no response is defined yet");

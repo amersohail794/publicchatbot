@@ -43,28 +43,36 @@ if (!(APP_SECRET && VALIDATION_TOKEN && PAGE_ACCESS_TOKEN && SERVER_URL)) {
  *
  */
 var callSendAPI = (messageData) => {
-  request({
-    uri: 'https://graph.facebook.com/v2.6/me/messages',
-    qs: { access_token: PAGE_ACCESS_TOKEN },
-    method: 'POST',
-    json: messageData
+  return new Promise((resolve,reject) => {
+    request({
+      uri: 'https://graph.facebook.com/v2.6/me/messages',
+      qs: { access_token: PAGE_ACCESS_TOKEN },
+      method: 'POST',
+      json: messageData
+  
+    }, function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var recipientId = body.recipient_id;
+        var messageId = body.message_id;
+  
+        if (messageId) {
+          console.log("Successfully sent message with id %s to recipient %s",
+            messageId, recipientId);
+        } else {
+        console.log("Successfully called Send API for recipient %s",
+          recipientId);
+        }
 
-  }, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      var recipientId = body.recipient_id;
-      var messageId = body.message_id;
+        resolve(true);
 
-      if (messageId) {
-        console.log("Successfully sent message with id %s to recipient %s",
-          messageId, recipientId);
       } else {
-      console.log("Successfully called Send API for recipient %s",
-        recipientId);
+
+        console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+        reject("Failed calling Send API " + response.statusCode +  response.statusMessage +  body.error);
       }
-    } else {
-      console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
-    }
+    });
   });
+  
 };
 
 
@@ -127,7 +135,7 @@ var sendTextMessage = (recipientId, messageText) => {
     }
   };
 
-  callSendAPI(messageData);
+  return callSendAPI(messageData);
 };
 
 /*
@@ -155,7 +163,7 @@ var sendQuickReply = (recipientId,text,response) => {
     })
   });
 
-  callSendAPI(messageData);
+  return callSendAPI(messageData);
 }
 
 /*
@@ -222,7 +230,7 @@ var sendGenericMessage = (recipientId,list) => {
   //   }]
   // }
 
-  callSendAPI(messageData);
+  return callSendAPI(messageData);
 }
 
 // {

@@ -395,6 +395,7 @@ function receivedDeliveryConfirmation(event) {
 }
 
 
+
 /*
  * Postback Event
  *
@@ -424,6 +425,7 @@ function receivedPostback(event) {
     messageId : undefined 
   }
 
+  
 
   if (event.postback.referral != undefined){
 	  console.log("Referernce ",event.postback.referral.ref);
