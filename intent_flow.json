@@ -25,7 +25,7 @@
                                 "text":"Hey {{user_first_name}}, How may i help you?",
                                 "responseType":"Text"
                              },{
-                                "text":"Hi {{user_first_name}}, I am a chatbot. What can i do for you?",
+                                "text":"Hi {{user_first_name}},  What can i do for you?",
                                 "responseType":"Text"
                              }]
                            
@@ -55,6 +55,8 @@
     },
     {
         "intent":"RenewVisa",
+        "usecase":"RenewVisa",
+        "startingPoint":"true",
         "actions": [
                     {
                         "entity": ["family","wife","kids","kid","daughter","son","children"],
@@ -164,6 +166,7 @@
     },
     {
         "intent":"RenewVisa.AppointmentForMedical",
+        "usecase":"RenewVisa",
         "intentImportance":"ServiceSelection",
         "actions": [
                     {
@@ -187,6 +190,7 @@
     },
     {
         "intent":"RenewVisa.AppointmentForMedical.location",
+        "usecase":"RenewVisa",
         "actions": [
                     {
                         "responses":[
@@ -202,6 +206,7 @@
     },
     {
         "intent":"RenewVisa.AppointmentForMedical.location.selectedLocation.[0-9]",
+        "usecase":"RenewVisa",
         "intentImportance":"BranchSelection",
         "actions":[
             {
@@ -220,6 +225,7 @@
     },
     {
         "intent":"AppointmentDateTime",
+        "usecase":"RenewVisa",
         "intentImportance":"AppointmentDateTimeSelection",
         "lastIntent":"RenewVisa.AppointmentForMedical.location.selectedLocation.[0-9]",
         "actions":[
@@ -240,17 +246,39 @@
                             "options":[
                                 {
                                     "title":"Confirm",
-                                    "payload":"RenewVisa.AppointmentForMedical.AppointmentConfirmed",
+                                    "payload":"RenewVisa.AppointmentForMedical.ConfirmAppointment",
                                     "content_type":"text"
                                 },
                                 {
                                     "title":"No",
-                                    "payload":"RenewVisa.AppointmentForMedical.AppointmentNotConfirmed",
+                                    "payload":"RenewVisa.AppointmentForMedical.DoNotConfirmAppointment",
                                     "content_type":"text"
                                 }
                             ]
                          }
                         ]
+                       
+                ]     
+            }  
+        ]
+       
+    },
+    {
+        "intent":"RenewVisa.AppointmentForMedical.ConfirmAppointment",
+        "usecase":"RenewVisa",
+        "intentImportance":"AppointmentConfirmation",
+        "lastIntent":"AppointmentDateTime",
+        "actions":[
+            {
+                "responses":[
+                        [{
+                            "responseType":"ApiGatewayJson",
+                            "processingFunction":"ConfirmAppointment"
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
+                            "processingFunction":"SendAppointmentDetail"
+                        }]
                        
                 ]     
             }  

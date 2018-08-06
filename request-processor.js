@@ -39,7 +39,7 @@ var process = (params) => {
 }
 
 var processQuickReply = (params) => {
-  //console.log("utterance ",utterance);
+  console.log("processQuickReply");
 
   flow.findFlow(params.quickReply.payload).then(onFlowFound.bind(null,params,undefined));
 
@@ -47,7 +47,7 @@ var processQuickReply = (params) => {
 
 var processMessageAttachment = (params) => {
 
-  return new promise( (resolve,reject) => {
+  return new Promise( (resolve,reject) => {
     
     if (params.attachments[0].type === 'location'){
       console.log("received user location");
@@ -86,22 +86,23 @@ var onFlowFound = (params,entityMap,intentFlow) => {
   console.log("Intent flow matched",JSON.stringify(intentFlow,undefined,2));
   
   //retrieving user profile
-  facebook.retrieveUserProfile(params.userId).then((profile) => {
+  facebook.retrieveUserProfile(params.userId)
+    .then((profile) => {
    
 
-    let selectedAction = findAppropriateAction(entityMap,intentFlow);
-    console.log("selectedAction ",JSON.stringify(selectedAction,undefined,1));
-    if (selectedAction === undefined){
-      //lets go for exceptionalFlow
-      let exceptionAction = findExceptionAction(entityMap,intentFlow);
-      if (exceptionAction === undefined){
-        facebook.sendTextMessage(params.userId,"sorry no response is defined yet");
+      let selectedAction = findAppropriateAction(entityMap,intentFlow);
+      console.log("selectedAction ",JSON.stringify(selectedAction,undefined,1));
+      if (selectedAction === undefined){
+        //lets go for exceptionalFlow
+        let exceptionAction = findExceptionAction(entityMap,intentFlow);
+        if (exceptionAction === undefined){
+          facebook.sendTextMessage(params.userId,"sorry no response is defined yet");
+        }
       }
-    }
-    else{
-      //lets execute the selected action
-      executeAction(params,profile,selectedAction,intentFlow,entityMap);
-    }
+      else{
+        //lets execute the selected action
+        executeAction(params,profile,selectedAction,intentFlow,entityMap);
+      }
 
   });
 
@@ -192,20 +193,28 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
 
   // });
 
-  let abc = 0;
+  
   action.responses.forEach((row) =>{
     p = p.then(() => new Promise(resolve =>{
 
+        setTimeout(() => {
+          let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
+          processingResponse(response,params,profile,action,intentFlow,entityMap)
+            .then((response) => {
+              collectingUserState(params,profile,action,intentFlow,entityMap,response);
+              resolve();
+            });  
+        },1500);        
         
-        console.log(abc);
         // processNumber(1,resolve)
-        let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
-        new Promise((res) => {
-          setTimeout(processingResponse.bind(null,res,response,params,profile,action,intentFlow,entityMap),1500);
-          // processingResponse(res,response,params,profile,action,intentFlow,entityMap);
-        }).then(() => {
-          collectingUserState(resolve,params,profile,action,intentFlow,entityMap);
-        });
+        
+        // new Promise((res) => {
+        //   setTimeout(processingResponse.bind(null,res,response,params,profile,action,intentFlow,entityMap),1500);
+        //   // processingResponse(res,response,params,profile,action,intentFlow,entityMap);
+        // }).then((response) => {
+          
+        //     .then(_ => resolve(true));
+        // });
         
     }
     ));
@@ -224,51 +233,90 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
 
 
 
-var collectingUserState = ((resolve,params,profile,action,intentFlow,entityMap) => {
+var collectingUserState = ((params,profile,action,intentFlow,entityMap,response) => {
   var attributes = new Map();
-  if (intentFlow.intentImportance != undefined){
-    switch(intentFlow.intentImportance){
-      case 'ServiceSelection':{
-        console.log('intentFlow importance -> Service Selection');
-        for (var i = 0; i < allServiceMappings.length; i++){
-          if (allServiceMappings[i].utterance === params.utterance){
-            attributes.set('selectedService',allServiceMappings[i].orchestraName);
-            attributes.set('selectedServicePublicId',allServiceMappings[i].publicId);
-            attributes.set('selectedServiceInternalId',allServiceMappings[i].internalId);
-            break;
-          }
-        }
-        console.log("collectingUserState -> ServiceSelection");
-        // resolve(true);
-        break;
-      }
-      case 'BranchSelection':{
-        console.log('intentFlow importance -> Branch Selection');
-        let payloadTokens = params.postback.payload.split('.');
-        attributes.set('selectedBranchInternalId',payloadTokens[payloadTokens.length-1]);
-        //retrieving branch public id
-        let responsePromise = orchestra.retrieveData('BRANCH_PUBLIC_DETAIL',new Map(Object.entries({SERVICE_ID:payloadTokens[payloadTokens.length-1]})),'get');
-        responsePromise.then((branchDetail) => {
-          attributes.set('selectedBranchPublicId',branchDetail.branch.publicId);
-          console.log("collectinguserState -> BranchSelection");
-          // resolve(true);
-        }).catch((error) => {
-          resolve(false);
-          console.log("Error -> " + JSON.stringify(error,undefined,2));
-        
-        });
-        
-        break;
-      }
-            
-    }
 
+  return new Promise((resolve,reject) => {
     
-  }
- 
+    if (intentFlow.intentImportance != undefined){
+      switch(intentFlow.intentImportance){
+        case 'ServiceSelection':{
+          console.log('intentFlow importance -> Service Selection');
+          for (var i = 0; i < allServiceMappings.length; i++){
+            if (allServiceMappings[i].utterance === params.utterance){
+              attributes.set('selectedService',allServiceMappings[i].orchestraName);
+              attributes.set('selectedServicePublicId',allServiceMappings[i].publicId);
+              attributes.set('selectedServiceInternalId',allServiceMappings[i].internalId);
+              break;
+            }
+          }
+          console.log("collectingUserState -> ServiceSelection");
+          userConversation.saveUserConversation(params.userId,intentFlow,attributes);
+          resolve(true);
+          break;
+        }
+        case 'BranchSelection':{
+          console.log('intentFlow importance -> Branch Selection');
+          let payloadTokens = params.postback.payload.split('.');
+          attributes.set('selectedBranchInternalId',payloadTokens[payloadTokens.length-1]);
+          //retrieving branch public id
+          let responsePromise = orchestra.makeRequest('BRANCH_PUBLIC_DETAIL',new Map(Object.entries({BRANCH_INTERNAL_ID:payloadTokens[payloadTokens.length-1]})),'get');
+          responsePromise.then((branchDetail) => {
+            attributes.set('selectedBranchPublicId',branchDetail.branch.publicId);
+            console.log("collectinguserState -> BranchSelection");
+            userConversation.saveUserConversation(params.userId,intentFlow,attributes);
+            resolve(true);
+            // resolve(true);
+          }).catch((error) => {
+            resolve(false);
+            console.log("Error -> " + JSON.stringify(error,undefined,2));
+          
+          });
+          
+          break;
+        }
+        case 'AppointmentDateTimeSelection':{
+          console.log('intentFlow importance -> Appointment DateTime Selection');
+  
+          let dateTime = entityMap.get("runtime.datetime.value");
+          if (dateTime !== undefined){
+          
+            let dateTimeArray = dateTime.split(' ');
+            attributes.set("selectedDate",dateTimeArray[0]);
+            attributes.set("selectedTime",dateTimeArray[1]);
+          }
+          
+          userConversation.saveUserConversation(params.userId,intentFlow,attributes);
+          resolve(true);
+          
+          break;
+        }
+        case 'AppointmentConfirmation':{
+          console.log('intentFlow importance -> Appointment Confirmation');
+          if (response !== undefined && response.publicId !== undefined){
+            attributes.set("appointmentConfirmationPublicId",response.publicId);
+            attributes.set("status","APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST");
+          }
+          else if (response !== undefined && response.appointment !== undefined){
+            attributes.set("appointmentqpId",response.appointment.qpId);
+            attributes.set("appointmentId",response.appointment.id);
+          }
+          userConversation.saveUserConversation(params.userId,intentFlow,attributes);
+          resolve(true);
+          break;
+        }
+        
+              
+      }
+  
+      
+    }
+   
+  
+    
+  }); // end of Promise
 
-  userConversation.saveUserConversation(params.userId,intentFlow.intent,attributes);
-  resolve(true);
+  
 });
 
 var processingTextResponse = ((response,params,profile,action,intentFlow,entityMap) => {
@@ -339,7 +387,8 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
       var longitude = params.attachments[0].payload.coordinates.long;
 
       userConversation.getUserConversation(params.userId).then((lastConversation) => {
-        return orchestra.retrieveData('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
+
+        return orchestra.makeRequest('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.activeUsecase.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
       }).then((branches) => { //process branches data
         var branchList = new Array();
 
@@ -390,7 +439,7 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
         let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
         console.log("TimeFormatted -> " + timeFormat);
         userConversation.getUserConversation(params.userId).then((lastConversation) => {
-          return orchestra.retrieveData('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.attributes.selectedBranchPublicId,DATE: date})),'get');  
+          return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: date})),'get');  
         }).then((availableTimes) => {
           
           let slotFound = false;
@@ -414,44 +463,93 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
           reject("Error -> " + JSON.stringify(error,undefined,2));
         });
       }) //end of promise
-      
-      
-      
+  }
+  else if (response.processingFunction ==='ConfirmAppointment'){
+    console.log("Confirming Appointment...");
 
-      
+    return new Promise((resolve,reject) => {
+      userConversation.getUserConversation(params.userId)
+        .then((lastConversation) => {
+        let selectedTime = lastConversation.activeUsecase.attributes.selectedTime;
+        let selectedTimeComponents = selectedTime.split(':');
+        let selectedTimeFormat = selectedTimeComponents[0] + ':' +selectedTimeComponents[1];
+        let postData = {
+          services : [{publicId : lastConversation.activeUsecase.attributes.selectedServicePublicId}],
+          customers : []
+        };
+        return orchestra.makeRequest('CONFIRM_APPOINTMENT',new Map(Object.entries(
+            {SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,
+              BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,
+              DATE: lastConversation.activeUsecase.attributes.selectedDate,
+              TIME : selectedTimeFormat}
+            )),'post',postData);  
+      }).then((appointmentDetails) => {
+        
+        //facebook.sendTextMessage("Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
+        resolve(appointmentDetails);
+      });
+
+    });
+
+    
+  }
+  else if (response.processingFunction ==='SendAppointmentDetail'){
+    console.log("Sending Appointment Detail...");
+
+    return new Promise((resolve,reject) => {
+      userConversation.getUserConversation(params.userId)
+        .then((lastConversation) => {
+        let appointmentPublicId = lastConversation.activeUsecase.attributes.appointmentConfirmationPublicId;
+       
+        return orchestra.makeRequest('APPOINTMENT_DETAIL',new Map(Object.entries(
+            {APPOINTMENT_PUBLIC_ID:appointmentPublicId}
+            )),'get');  
+      }).then((appointmentDetails) => {
+        
+        facebook.sendTextMessage(params.userId,"Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
+        resolve(appointmentDetails);
+      });
+
+    });
+
+    
   }
   else{
     console.log("No APIGateway processing found")
   }
 });
 
-var processingResponse = ((resolve,response,params,profile,action,intentFlow,entityMap) => {
-  
+var processingResponse = ((response,params,profile,action,intentFlow,entityMap) => {
   console.log("Response Selected",JSON.stringify(response,undefined,2));
-  if (response.responseType === 'Text'){
-    console.log("ResponseType ",response.responseType);
-    processingTextResponse(response,params,profile,action,intentFlow,entityMap)
-      .then(_ => resolve(true));
-    // resolve(true);
-    //setTimeout(facebook.sendTextMessage, 1200 * index++, params.userId, txt);
-  }
-  else if (response.responseType === 'QuickReply'){
-    console.log("ResponseType ",response.responseType);
-    processingQuickReplyResponse(response,params,profile,action,intentFlow,entityMap)
-      .then(_ => resolve(true));
-    // setTimeout(facebook.sendQuickReply, 1200 * index++, params.userId, txt,response);
-   
-  }
-  else if (response.responseType === 'ApiGatewayJson'){
-    console.log("ResponseType ",response.responseType);
-    processingApiGatewayJsonResponse(response,params,profile,action,intentFlow,entityMap)
-      .then(_ => resolve(true));
-   
-  }
-  else{
-    facebook.sendTextMessage(params.userId,"Sorry no response is defined yet");
-    // resolve(true);
-  }
+  return new Promise((resolve) => {
+    if (response.responseType === 'Text'){
+      console.log("ResponseType ",response.responseType);
+      processingTextResponse(response,params,profile,action,intentFlow,entityMap)
+        .then(_ => resolve());
+      // resolve(true);
+      //setTimeout(facebook.sendTextMessage, 1200 * index++, params.userId, txt);
+    }
+    else if (response.responseType === 'QuickReply'){
+      console.log("ResponseType ",response.responseType);
+      processingQuickReplyResponse(response,params,profile,action,intentFlow,entityMap)
+        .then(_ => resolve());
+      // setTimeout(facebook.sendQuickReply, 1200 * index++, params.userId, txt,response);
+     
+    }
+    else if (response.responseType === 'ApiGatewayJson'){
+      console.log("ResponseType ",response.responseType);
+      processingApiGatewayJsonResponse(response,params,profile,action,intentFlow,entityMap)
+        .then((response) => resolve(response));
+     
+    }
+    else{
+      facebook.sendTextMessage(params.userId,"Sorry no response is defined yet");
+       resolve();
+    }
+  }); //end of Promise
+
+ 
+  
   
 });
 

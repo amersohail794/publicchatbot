@@ -31,9 +31,21 @@ const requestProcessor = require('../request-processor');
 //   requestProcessor.processMessageAttachment(param2);
 
 
-var param2 = {
-    userId: "1697938176985929",
-    utterance: 'tomorrow at 2pm'
-}
+// var param2 = {
+//     userId: "1697938176985929",
+//     utterance: 'tomorrow at 2pm'
+// }
 
-requestProcessor.process(param2);
+// requestProcessor.process(param2);
+
+var p3 = {
+    userId: "1697938176985929",
+    timeOfMessage: 1533551973516,
+    utterance: "Confirm",
+    quickReply: {
+      payload: "RenewVisa.AppointmentForMedical.ConfirmAppointment"
+    },
+    messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
+  }
+
+requestProcessor.processQuickReply(p3);

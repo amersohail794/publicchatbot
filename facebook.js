@@ -98,7 +98,7 @@ var retrieveUserProfile = (userId) => {
 
 var callUserProfileAPI = (userId) =>{
   request({
-    uri: 'https://graph.facebook.com/v2.6/'+userId+'?fields=first_name,last_name,profile_pic&access_token='+PAGE_ACCESS_TOKEN,
+    uri: 'https://graph.facebook.com/v2.6/'+userId+'?fields=first_name,last_name,profile_pic,locale,timezone,gender,&access_token='+PAGE_ACCESS_TOKEN,
     method: 'GET'
 
   }, function (error, response, body) {

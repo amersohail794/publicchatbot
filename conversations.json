@@ -1,14 +1,21 @@
 [
   {
     "userId": "1697938176985929",
-    "lastIntent": "AppointmentDateTime",
-    "lastIntentDateTime": "2018-08-05T16:51:20+04:00",
-    "attributes": {
-      "selectedService": "Medical Test For Visa",
-      "selectedServicePublicId": "b86a840838a00c7436b0b12cb24ca77efd3a744d68fbca1e96f5a09cb76086ce",
-      "selectedServiceInternalId": "7",
-      "selectedBranchInternalId": "1",
-      "selectedBranchPublicId": "65719be11556064a713cfc53aacefa83467b7fb51fed145971273e1ae837c4c7"
+    "lastIntent": "RenewVisa.AppointmentForMedical.ConfirmAppointment",
+    "lastIntentDateTime": "2018-08-06T17:38:25+04:00",
+    "activeUsecase": {
+      "name": "RenewVisa",
+      "lastIntent": "RenewVisa.AppointmentForMedical.ConfirmAppointment",
+      "lastIntentDateTime": "2018-08-06T17:38:25+04:00",
+      "attributes": {
+        "selectedService": "Medical Test For Visa",
+        "selectedServicePublicId": "b86a840838a00c7436b0b12cb24ca77efd3a744d68fbca1e96f5a09cb76086ce",
+        "selectedServiceInternalId": "7",
+        "selectedBranchInternalId": "3",
+        "selectedBranchPublicId": "3cdcf4a5c89abbcade5dd6f6e3c42951cca95b2ea744d55b0c3f13af7f7a7c1e",
+        "selectedDate": "2018-08-07",
+        "selectedTime": "09:00:00"
+      }
     }
   }
 ]
