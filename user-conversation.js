@@ -36,78 +36,135 @@ var getUserConversation = (userId) => {
  
 };
 
+var getNextStep = ((userId) => {
+  console.log("Getting Next Step for User -> ",userId);
+  return new Promise((resolve) => {
+    fetchAllConversations().then((conversations) => {
+      let existingConversations = conversations.filter((conversation) => conversation.userId === userId);
+      
+      let userConversation = null;
+      if (existingConversations.length === 0){
+        userConversation = {userId : userId, lastIntent : intentFlow.intent, lastIntentDateTime: moment().format()};
+        conversations.push(userConversation);
+      }
+      else{
+        userConversation = existingConversations[0];
+      }
+      let nextStep = null;
+      if (userConversation.activeUsecase !== undefined && userConversation.activeUsecase.pendingSteps.length > 0){
+        nextStep = userConversation.activeUsecase.name + '.' +userConversation.activeUsecase.pendingSteps.splice(0,1);
+      }
+
+      resolve(nextStep);
+    });
+  })
+
+});
+
 var saveUserConversation = ((userId,intentFlow,attributesMap) => {
 
   return new Promise((resolve,reject) => {
     fetchAllConversations().then((conversations) => {
-
+      //Step 1 - Fetch User Conversation otherwise create one
       console.log("Total conversations",conversations.length);
       let existingConversations = conversations.filter((conversation) => conversation.userId === userId);
       console.log("Existing Conversations ",existingConversations.length);
+      let userConversation = null;
       if (existingConversations.length === 0){
-        conversations.push({userId : userId, lastIntent : intentFlow.intent, lastIntentDateTime: moment().format()});
-        //active use cases functionality
-        if (intentFlow.usecase !== undefined){
-          conversations[conversatiosn.length-1].activeUsecase = {};
-          conversations[conversatiosn.length-1].activeUsecase.name = intentFlow.usecase;
-          conversations[conversatiosn.length-1].activeUsecase.lastIntent = conversations[conversations.length -1].lastIntent;
-          conversations[conversatiosn.length-1].activeUsecase.lastIntentDateTime = conversations[conversations.length -1].lastIntentDateTime;
-          conversations[conversations.length-1].activeUsecase.attributes = {}; 
-          if (attributesMap != undefined){
-            for (let [attributeKey, attributeValue] of attributesMap.entries()) {
-              conversations[conversations.length-1].activeUsecase.attributes[attributeKey] = attributeValue;
-            }
-          }
-        }
-        
+        userConversation = {userId : userId, lastIntent : intentFlow.intent, lastIntentDateTime: moment().format()};
+        conversations.push(userConversation);
       }
       else{
-        existingConversations[0].lastIntent = intentFlow.intent;
-        existingConversations[0].lastIntentDateTime = moment().format();
-        if (intentFlow.usecase !== undefined){
-          if (existingConversations[0].activeUsecase !== undefined){
-            if (existingConversations[0].activeUsecase.name !== intentFlow.usecase){
-              //TODO: implement if intent is not from active usecase
-              if (existingConversations[0].archiveUsecases === undefined)
-                existingConversations[0].archiveUsecases = [];
-              
-              existingConversations[0].archiveUsecases.push(existingConversations[0].activeUsecase);
-              existingConversations[0].archiveUsecases[existingConversations[0].archiveUsecases.length - 1].status = "INCOMPLETE";
-              existingConversations[0].activeUsecase = {};
-            }
-          }
-          else{
-            existingConversations[0].activeUsecase = {};
-          }
-          
-            
-
-          
-          existingConversations[0].activeUsecase.name = intentFlow.usecase;        
-          existingConversations[0].activeUsecase.lastIntent = existingConversations[0].lastIntent;
-          existingConversations[0].activeUsecase.lastIntentDateTime = existingConversations[0].lastIntentDateTime;
-          if (attributesMap != undefined){
-
-            if (existingConversations[0].activeUsecase.attributes === undefined)
-              existingConversations[0].activeUsecase.attributes = {};
-
-            for (let [attributeKey, attributeValue] of attributesMap.entries()) {
-              existingConversations[0].activeUsecase.attributes[attributeKey] = attributeValue;
-            }
-          }
-
-          
-        }else{
-          console.log("intentflow does not have usecase");
-        }
-        // if (attributesMap != undefined){
-        //  for (let [attributeKey, attributeValue] of attributesMap.entries()) {
-        //   existingConversations[0].attributes[attributeKey] = attributeValue;
-        //  }
-        // }   
-   
+        userConversation = existingConversations[0];
       }
 
+      //Step 2: Store intent's name and timestamp
+
+      userConversation.lastIntent = intentFlow.intent;
+      userConversation.lastIntentDateTime = moment().format();
+
+      //Step 3 - check if there is use case for intent
+      let intentWithUsecase = false;
+      if (intentFlow.usecase !== undefined)
+        intentWithUsecase = true;
+
+      //Step 4 - check if there is already some activeUsecase or no
+      let activeUsecaseFound = false;
+      if (userConversation.activeUsecase !== undefined)
+        activeUsecaseFound = true;
+
+      //Step 5 if intent is with usecase and there is no active usecase, then create activeUsecase
+      if (intentWithUsecase && !activeUsecaseFound){
+        userConversation.activeUsecase = {};
+        userConversation.activeUsecase.attributes = {};
+        userConversation.activeUsecase.name = intentFlow.usecase;
+
+        userConversation.activeUsecase.pendingSteps = [];
+        userConversation.activeUsecase.pendingSteps = intentFlow.stepsToBeFollowed.slice();
+
+        userConversation.activeUsecase.followingUsecase = [];
+        userConversation.activeUsecase.followingUsecase = intentFlow.followingUsecase.slice();
+
+        userConversation.activeUsecase.completedSteps = [];
+
+        
+      }
+
+      //Step 5a if intent is with usecase which differs from already activeUsecase, then archive the existing one and create new one
+      if (intentWithUsecase && activeUsecaseFound && intentFlow.usecase !== userConversation.activeUsecase.name){
+        if (userConversation.archiveUsecases === undefined)
+            userConversation.archiveUsecases = [];
+          
+        userConversation.archiveUsecases.push(userConversation.activeUsecase);
+        userConversation.activeUsecase = {};
+        userConversation.activeUsecase.attributes = {};
+        userConversation.activeUsecase.name = intentFlow.usecase;
+
+        userConversation.activeUsecase.pendingSteps = [];
+        userConversation.activeUsecase.pendingSteps = intentFlow.stepsToBeFollowed.slice();
+
+        userConversation.activeUsecase.followingUsecase = [];
+        userConversation.activeUsecase.followingUsecase = intentFlow.followingUsecase.slice();
+
+        userConversation.activeUsecase.completedSteps = [];
+      }
+       
+
+      //Step 6 - If intent is with usecase and there is same activeUsecase but step varies,
+      // then put the currentStep as completed, pull new step from pendingSteps and make it active
+      if (intentWithUsecase && activeUsecaseFound && intentFlow.stepName !== userConversation.activeUsecase.currentStep){
+        userConversation.activeUsecase.completedSteps.push(userConversation.activeUsecase.currentStep);
+        if (userConversation.activeUsecase.pendingSteps.length > 0){
+          userConversation.activeUsecase.currentStep = userConversation.activeUsecase.pendingSteps[0];
+          userConversation.activeUsecase.pendingSteps.splice(0,1);
+        }
+        else
+          userConversation.activeUsecase.currentStep = undefined;
+        
+        
+      }
+      
+      //Step 6a - if intent is with usecase and there is activeUsecae but no current step,
+      // then pull new step from pending steps and make it active
+      if (intentWithUsecase && activeUsecaseFound && userConversation.activeUsecase.currentStep === undefined){
+        if (userConversation.activeUsecase.pendingSteps.length > 0){
+          userConversation.activeUsecase.currentStep = userConversation.activeUsecase.pendingSteps[0];
+          userConversation.activeUsecase.pendingSteps.splice(0,1);
+        }
+        else
+          userConversation.activeUsecase.currentStep = undefined;
+        
+      }
+
+      //Step 7 - if there is activeUsecase, then copy attributes to that activeUsecase
+      if (activeUsecaseFound && attributesMap !== undefined){
+        for (let [attributeKey, attributeValue] of attributesMap.entries()) {
+          userConversation.activeUsecase.attributes[attributeKey] = attributeValue;
+        }
+      }
+
+
+      //Step 8 - Save Conversation
       saveConversations(conversations).then( (response) => resolve(response));
       
 
@@ -128,3 +185,4 @@ var saveConversations = (conversations) => {
 
 module.exports.saveUserConversation = saveUserConversation;
 module.exports.getUserConversation = getUserConversation;
+module.exports.getNextStep = getNextStep;

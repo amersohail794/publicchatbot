@@ -1,6 +1,12 @@
 const requestProcessor = require('../request-processor');
+const app = require('../app');
 
-//requestProcessor.process('Hi');
+// var params = {
+//     utterance : 'Hi',
+//     userId : '1697938176985929'
+// }
+
+// requestProcessor.process(params);
 
 // var params = {
 //     utterance : 'I want to renew my family visa',
@@ -8,6 +14,20 @@ const requestProcessor = require('../request-processor');
 // }
 
 // requestProcessor.process(params);
+
+// var params = {
+//     userId: "1697938176985929",
+//     timeOfMessage: 1533551973516,
+//     utterance: "Medical Test",
+//     quickReply: {
+//       payload: "RenewVisa.AppointmentForMedical"
+//     },
+//     messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
+//   }
+
+// requestProcessor.processQuickReply(params);
+
+
 
 // var param2 = {
 //     userId: "1697938176985929",
@@ -30,22 +50,38 @@ const requestProcessor = require('../request-processor');
 
 //   requestProcessor.processMessageAttachment(param2);
 
-
-// var param2 = {
-//     userId: "1697938176985929",
-//     utterance: 'tomorrow at 2pm'
+// var event = {
+//   "recipient": {
+//     "id": "242927432968047"
+//   },
+//   "timestamp": 1533737082494,
+//   "sender": {
+//     "id": "1697938176985929"
+//   },
+//   "postback": {
+//     "payload": "RenewVisaMedicalTest.BranchSelection.selectedLocation.3",
+//     "title": "Select"
+//   }
 // }
 
-// requestProcessor.process(param2);
+// app.receivedPostback(event);
 
-var p3 = {
+
+var param2 = {
     userId: "1697938176985929",
-    timeOfMessage: 1533551973516,
-    utterance: "Confirm",
-    quickReply: {
-      payload: "RenewVisa.AppointmentForMedical.ConfirmAppointment"
-    },
-    messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
-  }
+    utterance: 'tomorrow at 2pm'
+}
 
-requestProcessor.processQuickReply(p3);
+requestProcessor.process(param2);
+
+// var p3 = {
+//     userId: "1697938176985929",
+//     timeOfMessage: 1533551973516,
+//     utterance: "Confirm",
+//     quickReply: {
+//       payload: "RenewVisa.AppointmentForMedical.ConfirmAppointment"
+//     },
+//     messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
+//   }
+
+// requestProcessor.processQuickReply(p3);
