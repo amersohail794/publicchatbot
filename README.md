@@ -1,3 +1,26 @@
+# Qmatic Chatbot Framework
+
+## Configuration
+
+* service_mapping - set qmatic id and public id for services
+* config/default.json - set server URL with public ip
+* orchestra.js - set calendar user, mobile user, api gateway path, orchestra path
+
+## Deployment
+
+* add all changes to github repository using 
+```
+git add ."
+```
+* commit changes to github
+```
+git commit -m "your comments here"
+```
+* post changes to heroku
+```
+git push heroku
+```
+
 # Messenger Platform Sample -- node.js
 
 This project is an example server for Messenger Platform built in Node.js. With this app, you can send it messages and it will echo them back to you. You can also see examples of the different types of Structured Messages. 
