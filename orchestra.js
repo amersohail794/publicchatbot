@@ -1,8 +1,8 @@
 const axios = require('axios');
 
 const properties = {
-    ORCHESTRA_URL :'http://127.0.0.1:8080/',
-    API_GATEWAY_URL : 'http://127.0.0.1:9090/',
+    ORCHESTRA_URL :'http://94.200.209.170:10002/',
+    API_GATEWAY_URL : 'http://94.200.209.170:10003/',
     MOBILE_USER_ID : 'd0516eee-a32d-11e5-bf7f-feff819cdc9f',
     CALENDAR_USER_ID: 'c7a1331a-32d-11e5-bf7f-feff819acdc9f',
     GEO_BRANCHES : 'geo/services/{{SERVICE_ID}}/nearestbranches?latitude={{LATITUDE}}&longitude={{LONGITUDE}}&maxNrOfBranches=4',
