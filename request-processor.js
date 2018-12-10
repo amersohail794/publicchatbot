@@ -508,11 +508,14 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
             )),'get');  
       }).then((appointmentDetails) => {
         
-        createAppointmentImage(appointmentDetails);
+        createAppointmentImage(appointmentDetails).then((imageURL) => {
+          console.log("image URL " + imageURL);
+          facebook.sendTextMessage(params.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
+          facebook.sendImageMessage(params.userId,imageURL)
+          resolve(appointmentDetails);
+        });
 
-        facebook.sendTextMessage(params.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
-        facebook.send
-        resolve(appointmentDetails);
+        
       });
 
     });
@@ -538,14 +541,14 @@ var createAppointmentImage = (appointmentDetails) =>{
 
     nightmare
     .viewport(300, 350)
-    .goto('https://obscure-harbor-15450.herokuapp.com/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+    .goto(SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
     
     .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
     .end()
     .then(() => {
       
       console.log('screenshot is done');
-      resolve();
+      resolve(SERVER_URL+'/appointment_content_appointmentDetails.appointment.qpId+'.png);
     })
   });
 }
