@@ -529,7 +529,7 @@ var createAppointmentImage = (appointmentDetails) =>{
 
   var template_content = fs.readFileSync('public/appointment_template.html','utf8');
   console.log(template_content);
-  template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.services[0].name);
+  template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
   fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);
 
   console.log("Creating Appointment image", appointmentDetails);
