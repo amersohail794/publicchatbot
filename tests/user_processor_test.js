@@ -48,4 +48,9 @@ var p3 = {
     messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
   }
 
-requestProcessor.processQuickReply(p3);
+//requestProcessor.processQuickReply(p3);
+
+var appointmentInfo = {
+  service : 'TESTING SERVICE'
+};
+requestProcessor.createAppointmentImage(appointmentInfo);

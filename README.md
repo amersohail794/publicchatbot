@@ -10,7 +10,7 @@
 
 * add all changes to github repository using 
 ```
-git add ."
+git add .
 ```
 * commit changes to github
 ```

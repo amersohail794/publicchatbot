@@ -10,7 +10,9 @@ const
   userConversation = require('./user-conversation'),
   serviceMappings = require('./service-mapping.js'),
   orchestra = require('./orchestra'),
-  NanoTimer = require('nanotimer');
+  NanoTimer = require('nanotimer'),
+  Nightmare = require ('nightmare'),
+  fs = require('fs');
   
 
 const allServiceMappings = serviceMappings.loadAllMappings();
@@ -506,7 +508,10 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
             )),'get');  
       }).then((appointmentDetails) => {
         
-        facebook.sendTextMessage(params.userId,"Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
+        createAppointmentImage(appointmentDetails);
+
+        facebook.sendTextMessage(params.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
+        facebook.send
         resolve(appointmentDetails);
       });
 
@@ -518,6 +523,32 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
     console.log("No APIGateway processing found")
   }
 });
+
+
+var createAppointmentImage = (appointmentDetails) =>{
+
+  var template_content = fs.readFileSync('public/appointment_template.html','utf8');
+  console.log(template_content);
+  template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.services[0].name);
+  fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);
+
+  console.log("Creating Appointment image", appointmentDetails);
+  return new Promise((resolve) => {
+    const nightmare = Nightmare();
+
+    nightmare
+    .viewport(300, 350)
+    .goto('https://obscure-harbor-15450.herokuapp.com/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+    
+    .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
+    .end()
+    .then(() => {
+      
+      console.log('screenshot is done');
+      resolve();
+    })
+  });
+}
 
 var processingResponse = ((response,params,profile,action,intentFlow,entityMap) => {
   console.log("Response Selected",JSON.stringify(response,undefined,2));
@@ -558,5 +589,6 @@ module.exports.process = process;
 module.exports.processQuickReply = processQuickReply;
 module.exports.processMessageAttachment = processMessageAttachment;
 module.exports.processPostback = processPostback;
+module.exports.createAppointmentImage = createAppointmentImage;
 
 
