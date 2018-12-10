@@ -538,7 +538,7 @@ var createAppointmentImage = (appointmentDetails) =>{
   console.log("Creating Appointment image", appointmentDetails);
   return new Promise((resolve) => {
     const nightmare = Nightmare();
-
+    console.log("SERVER_url ",SERVER_URL);
     nightmare
     .viewport(300, 350)
     .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
