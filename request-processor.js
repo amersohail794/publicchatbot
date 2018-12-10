@@ -541,14 +541,14 @@ var createAppointmentImage = (appointmentDetails) =>{
 
     nightmare
     .viewport(300, 350)
-    .goto(SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+    .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
     
     .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
     .end()
     .then(() => {
       
       console.log('screenshot is done');
-      resolve(SERVER_URL+'/appointment_content_appointmentDetails.appointment.qpId+'.png);
+      resolve(facebook.SERVER_URL+'/appointment_content_appointmentDetails.appointment.qpId+'.png);
     })
   });
 }
