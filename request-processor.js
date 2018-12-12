@@ -533,7 +533,12 @@ var createAppointmentImage = (appointmentDetails) =>{
   var template_content = fs.readFileSync('public/appointment_template.html','utf8');
   console.log(template_content);
   template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
-  fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);
+  try{
+    fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
+  }catch(e){
+    console.log(e);
+  }
+  
 
   console.log("Creating Appointment image", appointmentDetails);
   return new Promise((resolve) => {
