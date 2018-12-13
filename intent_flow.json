@@ -55,8 +55,6 @@
     },
     {
         "intent":"RenewVisa",
-        "usecase":"RenewVisa",
-        "startingPoint":"true",
         "actions": [
                     {
                         "entity": ["family","wife","kids","kid","daughter","son","children"],
@@ -166,13 +164,56 @@
     },
     {
         "intent":"RenewVisa.AppointmentForMedical",
-        "usecase":"RenewVisa",
-        "intentImportance":"ServiceSelection",
+        "usecase":"RenewVisaMedicalTest",
+        "followingUsecase":["RenewvisaAppSubmission"],
+        "stepsToBeFollowed":["ServiceSelection","BranchSelection","DateTimeSelection","AppointmentConfirmation"],
         "actions": [
                     {
                         "responses":[
                                 [{
-                                    "text":"Let me help you to book an appointment. Please share your location so i can find nearest medical centers",
+                                    "text":"Let me help you to book an appointment for renewing visa.",
+                                    "responseType":"Text"
+                                }],
+                                [{
+                                    "text":"proceed",
+                                    "responseType":"Internal"
+                                }]
+                            
+                        ]
+                    }
+        ]
+       
+    },
+    {
+        "intent":"RenewVisaMedicalTest.ServiceSelection",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"ServiceSelection",
+        "actions": [
+                    {
+                        "responses":[
+                                [{
+                                    "text":"Medical Test",
+                                    "responseType":"ServiceSelection"
+                                }],
+                                [{
+                                    "text":"proceed",
+                                    "responseType":"Internal"
+                                }]
+                            
+                        ]
+                    }
+        ]
+       
+    },
+    {
+        "intent":"RenewVisaMedicalTest.BranchSelection",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"BranchSelection",
+        "actions": [
+                    {
+                        "responses":[
+                                [{
+                                    "text":"Please share your location so i can find nearest medical centers",
                                     "responseType":"QuickReply",
                                     "options":[
                                         {
@@ -189,8 +230,9 @@
        
     },
     {
-        "intent":"RenewVisa.AppointmentForMedical.location",
-        "usecase":"RenewVisa",
+        "intent":"RenewVisaMedicalTest.BranchSelection.location",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"BranchSelection",
         "actions": [
                     {
                         "responses":[
@@ -205,18 +247,20 @@
        
     },
     {
-        "intent":"RenewVisa.AppointmentForMedical.location.selectedLocation.[0-9]",
-        "usecase":"RenewVisa",
-        "intentImportance":"BranchSelection",
+        "intent":"RenewVisaMedicalTest.BranchSelection.selectedLocation.[0-9]",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"BranchSelection",
         "actions":[
             {
             
                 "responses":[
                         [{
-                            "text":"Great! When and at what time you want to book appointment e.g. tomorrow at 12pm or wednesday at 10 or next thursday at 9?",
-                            "responseType":"Text"
-                         }
-                        ]
+                            "responseType":"BranchSelection"
+                        }],
+                        [{
+                            "text":"proceed",
+                            "responseType":"Internal"
+                        }]
                        
                 ]     
             }  
@@ -224,14 +268,32 @@
        
     },
     {
+        "intent":"RenewVisaMedicalTest.DateTimeSelection",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"DateTimeSelection",
+        "actions": [
+                    {
+                        "responses":[
+                            [{
+                                "text":"Great! When and at what time you want to book appointment e.g. tomorrow at 12pm or wednesday at 10 or next thursday at 9?",
+                                "responseType":"Text"
+                            }]
+                            
+                        ]
+                    }
+        ]
+       
+    },
+    {
         "intent":"AppointmentDateTime",
-        "usecase":"RenewVisa",
-        "intentImportance":"AppointmentDateTimeSelection",
-        "lastIntent":"RenewVisa.AppointmentForMedical.location.selectedLocation.[0-9]",
+        "stepName":"DateTimeSelection",
         "actions":[
             {
                 "entityTypesRequired":["builtin.datetimeV2.datetime"],
                 "responses":[
+                        [{
+                            "responseType":"DateTimeSelection"
+                        }],
                         [{
                             "responseType":"Text",
                             "text":"Checking availability..."
@@ -241,22 +303,59 @@
                             "processingFunction":"CheckAvailability"
                         }],
                         [{
-                            "text":"Great. We found booking slot for {{runtime.datetime.value}}. Please confirm to book it ",
+                            "text":"proceed",
+                            "responseType":"Internal"
+                        }]
+                       
+                ],
+                "exceptions":[
+                    {
+
+                        "exceptionType":"SlotNotAvailable",
+                        "responses":[
+                            [{
+                                "responesType":"Text",
+                                "text":"Unfortunately we didn't find any slot for {{UserSession.selectedTime}}"
+                            }],
+                            [{
+                                "responesType":"Text",
+                                "text":"We are trying to find empty slots closest to your time. Please wait..."
+                            }],
+                            [{
+                                "responseType":"ApiGatewayJson",
+                                "processingFunction":"FindEmptySlots"
+                            }]
+                        ]
+
+                    }
+                ]     
+            }  
+        ]
+       
+    },
+    {
+        "intent":"RenewVisaMedicalTest.AppointmentConfirmation",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"AppointmentConfirmation",
+        "actions":[
+            {
+                "responses":[
+                        [{
+                            "text":"Great. We found booking slot for {{UserSession.selectedDate}} {{UserSession.selectedTime}}. Please confirm to book it ",
                             "responseType":"QuickReply",
                             "options":[
                                 {
                                     "title":"Confirm",
-                                    "payload":"RenewVisa.AppointmentForMedical.ConfirmAppointment",
+                                    "payload":"RenewVisaMedicalTest.AppointmentConfirmation.yes",
                                     "content_type":"text"
                                 },
                                 {
                                     "title":"No",
-                                    "payload":"RenewVisa.AppointmentForMedical.DoNotConfirmAppointment",
+                                    "payload":"RenewVisaMedicalTest.AppointmentConfirmation.no",
                                     "content_type":"text"
                                 }
                             ]
-                         }
-                        ]
+                        }]
                        
                 ]     
             }  
@@ -264,24 +363,50 @@
        
     },
     {
-        "intent":"RenewVisa.AppointmentForMedical.ConfirmAppointment",
-        "usecase":"RenewVisa",
-        "intentImportance":"AppointmentConfirmation",
-        "lastIntent":"AppointmentDateTime",
+        "intent":"RenewVisaMedicalTest.AppointmentConfirmation.yes",
+        "usecase":"RenewVisaMedicalTest",
+        "step":"AppointmentConfirmation",
         "actions":[
             {
                 "responses":[
                         [{
                             "responseType":"ApiGatewayJson",
-                            "processingFunction":"ConfirmAppointment"
+                            "processingFunction":"SendAppointmentDetail"
                         }],
                         [{
-                            "responseType":"ApiGatewayJson",
-                            "processingFunction":"SendAppointmentDetail"
+                            "text":"proceed",
+                            "responseType":"Internal"
                         }]
                        
                 ]     
             }  
+        ]
+       
+    },
+    {
+        "intent":"RenewvisaAppSubmission.ProceedingPermission",
+        "actions": [
+                    {
+                        "responses":[
+                            [{
+                                "text":"Do you want to book an appointment for Application Submission?",
+                                "responseType":"QuickReply",
+                                "options":[
+                                    {
+                                        "title":"Yes",
+                                        "payload":"RenewvisaAppSubmission.proceedingPermission.yes",
+                                        "content_type":"text"
+                                    },
+                                    {
+                                        "title":"No",
+                                        "payload":"RenewvisaAppSubmission.proceedingPermission.no",
+                                        "content_type":"text"
+                                    }
+                                ]
+                            }]
+                           
+                        ]
+                    }
         ]
        
     }

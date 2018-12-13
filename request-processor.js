@@ -22,7 +22,7 @@ var process = (params) => {
   
   return new Promise((resolve,reject) => {
     
-    console.log("uttrerance ",params.utterance)
+    console.log("utterance ",params.utterance)
     console.log("params " + JSON.stringify(params,undefined,2));
     
     userConversation.getUserConversation(params.userId)
@@ -31,6 +31,15 @@ var process = (params) => {
 
         if (lastConversation == undefined)
           flow.findFlow("NewCustomer").then(onFlowFound.bind(null,params,undefined));    
+        else if (params.utterance === 'Internal.proceed'){
+          userConversation.getNextStep(params.userId)
+            .then((stepName) => {
+              params.utterance = stepName;
+              flow.findFlow(stepName)
+                .then(onFlowFound.bind(null,params,undefined));
+          });
+          
+        }
         else{
           luis.query(params.utterance).then(onLuisRespnose.bind(null,params)); //https://stackoverflow.com/questions/32912459/promises-pass-additional-parameters-to-then-chain
         }
@@ -203,8 +212,8 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
         setTimeout(() => {
           let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
           processingResponse(response,params,profile,action,intentFlow,entityMap)
-            .then((response) => {
-              collectingUserState(params,profile,action,intentFlow,entityMap,response);
+            .then((responseResult) => {
+              collectingUserState(params,profile,action,intentFlow,entityMap,response,responseResult);
               resolve();
             });  
         },1500);        
@@ -236,17 +245,21 @@ var executeAction = function(params,profile,action,intentFlow,entityMap){
 
 
 
-var collectingUserState = ((params,profile,action,intentFlow,entityMap,response) => {
+var collectingUserState = ((params,profile,action,intentFlow,entityMap,processedResponse,responseResult) => {
   var attributes = new Map();
 
   return new Promise((resolve,reject) => {
     
-    if (intentFlow.intentImportance != undefined){
-      switch(intentFlow.intentImportance){
+    // if (intentFlow.intentImportance === undefined){
+    //   userConversation.saveUserConversation(params.userId,intentFlow,attributes);
+    // }
+
+    // if (intentFlow.intentImportance != undefined){
+      switch(processedResponse.responseType){
         case 'ServiceSelection':{
           console.log('intentFlow importance -> Service Selection');
           for (var i = 0; i < allServiceMappings.length; i++){
-            if (allServiceMappings[i].utterance === params.utterance){
+            if (allServiceMappings[i].utterance === processedResponse.text){
               attributes.set('selectedService',allServiceMappings[i].orchestraName);
               attributes.set('selectedServicePublicId',allServiceMappings[i].publicId);
               attributes.set('selectedServiceInternalId',allServiceMappings[i].internalId);
@@ -283,10 +296,12 @@ var collectingUserState = ((params,profile,action,intentFlow,entityMap,response)
           
           break;
         }
-        case 'AppointmentDateTimeSelection':{
+        case 'DateTimeSelection':{
           console.log('intentFlow importance -> Appointment DateTime Selection');
-  
-          let dateTime = entityMap.get("runtime.datetime.value");
+          let ent = entityMap.get('builtin.datetimeV2.datetime');
+          console.log("entity -> " + JSON.stringify(ent,undefined,2));
+          let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
+          // let dateTime = entityMap.get("runtime.datetime.value");
           if (dateTime !== undefined){
           
             let dateTimeArray = dateTime.split(' ');
@@ -301,24 +316,27 @@ var collectingUserState = ((params,profile,action,intentFlow,entityMap,response)
         }
         case 'AppointmentConfirmation':{
           console.log('intentFlow importance -> Appointment Confirmation');
-          if (response !== undefined && response.publicId !== undefined){
-            attributes.set("appointmentConfirmationPublicId",response.publicId);
+          if (responseResult !== undefined && responseResult.publicId !== undefined){
+            attributes.set("appointmentConfirmationPublicId",responseResult.publicId);
             attributes.set("status","APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST");
           }
-          else if (response !== undefined && response.appointment !== undefined){
-            attributes.set("appointmentqpId",response.appointment.qpId);
-            attributes.set("appointmentId",response.appointment.id);
+          else if (responseResult !== undefined && responseResult.appointment !== undefined){
+            attributes.set("appointmentqpId",responseResult.appointment.qpId);
+            attributes.set("appointmentId",responseResult.appointment.id);
           }
           userConversation.saveUserConversation(params.userId,intentFlow,attributes);
           resolve(true);
           break;
+        }
+        default:{
+          userConversation.saveUserConversation(params.userId,intentFlow,attributes);
         }
         
               
       }
   
       
-    }
+    // }
    
   
     
@@ -346,10 +364,29 @@ var processingTextResponse = ((response,params,profile,action,intentFlow,entityM
         }
       }
     }
+
+    userConversation.getUserConversation(params.userId)
+      .then((conversation) => {
+
+        if (conversation.activeUsecase != undefined){
+          for (let property in conversation.activeUsecase.attributes) {
+            if (conversation.activeUsecase.attributes.hasOwnProperty(property)) {
+              console.log('property -> ' + property); 
+              txt = txt.replace('{{UserSession.'+property+'}}',conversation.activeUsecase.attributes[property]);
+            }
+          }
+        }
+        
+
+        facebook.sendTextMessage(params.userId,txt)
+          .then(_ => resolve(true))
+          .catch(() => reject("Could not send text response"));
+
+          
+    });
+
     
-    facebook.sendTextMessage(params.userId,txt)
-      .then(_ => resolve(true))
-      .catch(() => reject("Could not send text response"));
+    
   });
 
 
@@ -377,9 +414,29 @@ var processingQuickReplyResponse = ((response,params,profile,action,intentFlow,e
             
         }
       }
-      facebook.sendQuickReply(params.userId,txt,response)
-        .then(_ => resolve(true))
-        .catch(() => reject("Could not send quick reply response"));
+
+      userConversation.getUserConversation(params.userId)
+        .then((conversation) => {
+
+          if (conversation.activeUsecase != undefined){
+            for (let property in conversation.activeUsecase.attributes) {
+              if (conversation.activeUsecase.attributes.hasOwnProperty(property)) {
+                console.log('property -> ' + property); 
+                txt = txt.replace('{{UserSession.'+property+'}}',conversation.activeUsecase.attributes[property]);
+              }
+            }
+          }
+          
+
+          facebook.sendQuickReply(params.userId,txt,response)
+          .then(_ => resolve(true))
+          .catch(() => reject("Could not send quick reply response"));
+
+          
+        });
+
+
+      
     });
     
 });
@@ -408,7 +465,7 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
             actions : [] 
           };
 
-          branchData.actions.push({type : 'postback', title : 'Select', payload : intentFlow.intent + '.selectedLocation.'+branch.id});
+          branchData.actions.push({type : 'postback', title : 'Select', payload : intentFlow.usecase + '.' + intentFlow.stepName + '.selectedLocation.'+branch.id});
           branchList.push(branchData);
         });
 
@@ -597,14 +654,13 @@ var processingResponse = ((response,params,profile,action,intentFlow,entityMap) 
       console.log("ResponseType ",response.responseType);
       processingTextResponse(response,params,profile,action,intentFlow,entityMap)
         .then(_ => resolve());
-      // resolve(true);
-      //setTimeout(facebook.sendTextMessage, 1200 * index++, params.userId, txt);
+      
     }
     else if (response.responseType === 'QuickReply'){
       console.log("ResponseType ",response.responseType);
       processingQuickReplyResponse(response,params,profile,action,intentFlow,entityMap)
         .then(_ => resolve());
-      // setTimeout(facebook.sendQuickReply, 1200 * index++, params.userId, txt,response);
+      
      
     }
     else if (response.responseType === 'ApiGatewayJson'){
@@ -612,6 +668,20 @@ var processingResponse = ((response,params,profile,action,intentFlow,entityMap) 
       processingApiGatewayJsonResponse(response,params,profile,action,intentFlow,entityMap)
         .then((response) => resolve(response));
      
+    }
+    else if (response.responseType === 'Internal'){
+      console.log("ResponseType ",response.responseType);
+      
+      let p = {
+        userId : params.userId,
+        utterance : response.responseType + '.' + response.text
+      }
+      process(p).then(_ => resolve());
+    }
+    else if (['ServiceSelection','BranchSelection','DateTimeSelection','AppointmentConfirmation'].includes(response.responseType)){
+      console.log(`no need to do anything for ${response.responseType} as it will be handled by CollectingUserState`)
+      //no need to do anything as it will be handled by CollectingUserState
+      resolve();
     }
     else{
       facebook.sendTextMessage(params.userId,"Sorry no response is defined yet");
