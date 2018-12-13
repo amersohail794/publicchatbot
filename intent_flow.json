@@ -371,10 +371,14 @@
                 "responses":[
                         [{
                             "responseType":"ApiGatewayJson",
+                            "processingFunction":"ConfirmAppointment"
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
                             "processingFunction":"SendAppointmentDetail"
                         }],
                         [{
-                            "text":"proceed",
+                            "text":"moveUsecaseToInprocess",
                             "responseType":"Internal"
                         }]
                        

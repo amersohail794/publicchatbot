@@ -61,6 +61,38 @@ var getNextStep = ((userId) => {
 
 });
 
+var moveActiveUsecaseToInprocess = ((userId) => {
+  console.log("moving active use case to in process -> ",userId); //also move pending use cases to pending use case list
+
+  return new Promise((resolve) => {
+    fetchAllConversations().then((conversations) => {
+      let existingConversations = conversations.filter((conversation) => conversation.userId === userId);
+      
+      let userConversation = null;
+      if (existingConversations.length > 0){
+        userConversation = existingConversations[0];
+        if (userConversation.inProcessUsecases === undefined){
+          console.log("there is no inprocess use cases");
+          userConversation.inProcessUsecases = [];
+        }
+
+        if (userConversation.activeUsecase != undefined){
+          console.log("activeUsecase is going to push to inprocess use cases");
+          userConversation.inProcessUsecases.push(userConversation.activeUsecase);
+          userConversation.activeUsecase = null;
+        }
+        
+      }
+      
+      saveConversations(conversations);
+
+      resolve(true);
+    });
+  })
+
+
+});
+
 var saveUserConversation = ((userId,intentFlow,attributesMap) => {
 
   return new Promise((resolve,reject) => {
@@ -186,3 +218,4 @@ var saveConversations = (conversations) => {
 module.exports.saveUserConversation = saveUserConversation;
 module.exports.getUserConversation = getUserConversation;
 module.exports.getNextStep = getNextStep;
+module.exports.moveActiveUsecaseToInprocess = moveActiveUsecaseToInprocess;

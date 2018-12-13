@@ -34,11 +34,15 @@ var process = (params) => {
         else if (params.utterance === 'Internal.proceed'){
           userConversation.getNextStep(params.userId)
             .then((stepName) => {
+              
               params.utterance = stepName;
               flow.findFlow(stepName)
                 .then(onFlowFound.bind(null,params,undefined));
           });
           
+        }
+        else if (params.utterance === 'Internal.moveUsecaseToInprocess'){
+          userConversation.moveActiveUsecaseToInprocess(params.userId);
         }
         else{
           luis.query(params.utterance).then(onLuisRespnose.bind(null,params)); //https://stackoverflow.com/questions/32912459/promises-pass-additional-parameters-to-then-chain
@@ -314,16 +318,24 @@ var collectingUserState = ((params,profile,action,intentFlow,entityMap,processed
           
           break;
         }
-        case 'AppointmentConfirmation':{
-          console.log('intentFlow importance -> Appointment Confirmation');
-          if (responseResult !== undefined && responseResult.publicId !== undefined){
-            attributes.set("appointmentConfirmationPublicId",responseResult.publicId);
-            attributes.set("status","APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST");
+        case 'ApiGatewayJson':{
+
+          switch(processedResponse.processingFunction){
+            case 'ConfirmAppointment':{
+              console.log('intentFlow importance -> Appointment Confirmation');
+              if (responseResult !== undefined && responseResult.publicId !== undefined){
+                attributes.set("appointmentConfirmationPublicId",responseResult.publicId);
+                attributes.set("status","APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST");
+              }
+              else if (responseResult !== undefined && responseResult.appointment !== undefined){
+                attributes.set("appointmentqpId",responseResult.appointment.qpId);
+                attributes.set("appointmentId",responseResult.appointment.id);
+              }
+             
+            }
           }
-          else if (responseResult !== undefined && responseResult.appointment !== undefined){
-            attributes.set("appointmentqpId",responseResult.appointment.qpId);
-            attributes.set("appointmentId",responseResult.appointment.id);
-          }
+          
+        
           userConversation.saveUserConversation(params.userId,intentFlow,attributes);
           resolve(true);
           break;
@@ -331,6 +343,7 @@ var collectingUserState = ((params,profile,action,intentFlow,entityMap,processed
         default:{
           userConversation.saveUserConversation(params.userId,intentFlow,attributes);
         }
+         
         
               
       }
@@ -368,7 +381,7 @@ var processingTextResponse = ((response,params,profile,action,intentFlow,entityM
     userConversation.getUserConversation(params.userId)
       .then((conversation) => {
 
-        if (conversation.activeUsecase != undefined){
+        if (conversation != undefined && conversation.activeUsecase != undefined){
           for (let property in conversation.activeUsecase.attributes) {
             if (conversation.activeUsecase.attributes.hasOwnProperty(property)) {
               console.log('property -> ' + property); 
