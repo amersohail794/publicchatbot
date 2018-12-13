@@ -10,7 +10,10 @@ const
   userConversation = require('./user-conversation'),
   serviceMappings = require('./service-mapping.js'),
   orchestra = require('./orchestra'),
-  NanoTimer = require('nanotimer');
+  NanoTimer = require('nanotimer'),
+  Nightmare = require ('nightmare'),
+  moment = require('moment-timezone'),
+  fs = require('fs');
   
 
 const allServiceMappings = serviceMappings.loadAllMappings();
@@ -276,6 +279,11 @@ var collectingUserState = ((params,profile,action,intentFlow,entityMap,processed
           let responsePromise = orchestra.makeRequest('BRANCH_PUBLIC_DETAIL',new Map(Object.entries({BRANCH_INTERNAL_ID:payloadTokens[payloadTokens.length-1]})),'get');
           responsePromise.then((branchDetail) => {
             attributes.set('selectedBranchPublicId',branchDetail.branch.publicId);
+            attributes.set('selectedBranchTimezone',branchDetail.branch.timeZone);
+            attributes.set('selectedBranchAddressLine1',branchDetail.branch.addressLine1);
+            attributes.set('selectedBranchCity',branchDetail.branch.addressCity);
+            attributes.set('selectedBranchCountry',branchDetail.branch.addressCountry);
+           
             console.log("collectinguserState -> BranchSelection");
             userConversation.saveUserConversation(params.userId,intentFlow,attributes);
             resolve(true);
@@ -501,9 +509,11 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
           
           let slotFound = false;
           availableTimes.times.forEach((t) => {
-            if (t === timeFormat)
+            if (t === timeFormat){
               console.log("slot found");
               slotFound = true;
+            }
+              
             
           });
           if (slotFound){
@@ -563,8 +573,14 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
             )),'get');  
       }).then((appointmentDetails) => {
         
-        facebook.sendTextMessage(params.userId,"Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
-        resolve(appointmentDetails);
+        createAppointmentImage(appointmentDetails,params).then((imageURL) => {
+          console.log("image URL " + imageURL);
+          facebook.sendTextMessage(params.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
+          facebook.sendImageMessage(params.userId,imageURL)
+          resolve(appointmentDetails);
+        });
+
+        
       });
 
     });
@@ -575,6 +591,61 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
     console.log("No APIGateway processing found")
   }
 });
+
+
+var createAppointmentImage = (appointmentDetails,params) =>{
+
+  return new Promise((resolve,reject) => {
+    userConversation.getUserConversation(params.userId)
+      .then((lastConversation) => {
+        let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
+        var template_content = fs.readFileSync('public/appointment_template.html','utf8');
+        console.log(template_content);
+        console.log(timezone);
+        let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
+        let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
+        console.log(timeZoneStartTime.format());
+        console.log(timeZoneStartTime.format('hh:mm'));
+
+
+
+        template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
+        template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('hh:mm') + ' - ' + timeZoneEndTime.format('hh:mm'));
+        let ld = timeZoneStartTime.localeData();
+        template_content = template_content.replace('[DATE]',timeZoneStartTime.format('dddd, MMMM Do YYYY'));
+        template_content = template_content.replace('[BRANCH_NAME]',appointmentDetails.appointment.branch.name);
+        template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
+        template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
+        template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
+        console.log(ld.weekdays(timeZoneStartTime));
+
+
+
+
+        try{
+          fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
+        }catch(e){
+          console.log(e);
+        }
+        console.log("Creating Appointment image", appointmentDetails);
+
+        const nightmare = Nightmare();
+        console.log("SERVER_url ",facebook.SERVER_URL);
+        nightmare
+        .viewport(300, 350)
+        .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+        
+        .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
+        .end()
+        .then(() => {
+          
+          console.log('screenshot is done');
+          resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
+        })
+      });  
+  });
+
+}
 
 var processingResponse = ((response,params,profile,action,intentFlow,entityMap) => {
   console.log("Response Selected",JSON.stringify(response,undefined,2));
@@ -628,5 +699,6 @@ module.exports.process = process;
 module.exports.processQuickReply = processQuickReply;
 module.exports.processMessageAttachment = processMessageAttachment;
 module.exports.processPostback = processPostback;
+module.exports.createAppointmentImage = createAppointmentImage;
 
 

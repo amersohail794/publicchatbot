@@ -85,3 +85,11 @@ requestProcessor.process(param2);
 //   }
 
 // requestProcessor.processQuickReply(p3);
+
+
+
+var appointmentInfo = {
+  service : 'TESTING SERVICE'
+};
+requestProcessor.createAppointmentImage(appointmentInfo);
+

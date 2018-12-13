@@ -233,6 +233,28 @@ var sendGenericMessage = (recipientId,list) => {
   return callSendAPI(messageData);
 }
 
+/*
+ * Send an image using the Send API.
+ *
+ */
+function sendImageMessage(recipientId,imageName) {
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      attachment: {
+        type: "image",
+        payload: {
+          url: imageName
+        }
+      }
+    }
+  };
+
+  callSendAPI(messageData);
+}
+
 // {
 //   "content_type":"text",
 //   "title":"Action",
@@ -254,4 +276,6 @@ module.exports.sendTextMessage = sendTextMessage;
 module.exports.sendQuickReply = sendQuickReply;
 module.exports.retrieveUserProfile = retrieveUserProfile;
 module.exports.sendGenericMessage = sendGenericMessage;
+module.exports.sendImageMessage = sendImageMessage;
+module.exports.SERVER_URL = SERVER_URL;
 
