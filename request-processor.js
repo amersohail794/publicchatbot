@@ -12,6 +12,7 @@ const
   orchestra = require('./orchestra'),
   NanoTimer = require('nanotimer'),
   Nightmare = require ('nightmare'),
+  moment = require('moment-timezone'),
   fs = require('fs');
   
 
@@ -265,6 +266,11 @@ var collectingUserState = ((params,profile,action,intentFlow,entityMap,response)
           let responsePromise = orchestra.makeRequest('BRANCH_PUBLIC_DETAIL',new Map(Object.entries({BRANCH_INTERNAL_ID:payloadTokens[payloadTokens.length-1]})),'get');
           responsePromise.then((branchDetail) => {
             attributes.set('selectedBranchPublicId',branchDetail.branch.publicId);
+            attributes.set('selectedBranchTimezone',branchDetail.branch.timeZone);
+            attributes.set('selectedBranchAddressLine1',branchDetail.branch.addressLine1);
+            attributes.set('selectedBranchCity',branchDetail.branch.addressCity);
+            attributes.set('selectedBranchCountry',branchDetail.branch.addressCountry);
+           
             console.log("collectinguserState -> BranchSelection");
             userConversation.saveUserConversation(params.userId,intentFlow,attributes);
             resolve(true);
@@ -446,9 +452,11 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
           
           let slotFound = false;
           availableTimes.times.forEach((t) => {
-            if (t === timeFormat)
+            if (t === timeFormat){
               console.log("slot found");
               slotFound = true;
+            }
+              
             
           });
           if (slotFound){
@@ -508,7 +516,7 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
             )),'get');  
       }).then((appointmentDetails) => {
         
-        createAppointmentImage(appointmentDetails).then((imageURL) => {
+        createAppointmentImage(appointmentDetails,params).then((imageURL) => {
           console.log("image URL " + imageURL);
           facebook.sendTextMessage(params.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
           facebook.sendImageMessage(params.userId,imageURL)
@@ -528,34 +536,58 @@ var processingApiGatewayJsonResponse =  ( (response,params,profile,action,intent
 });
 
 
-var createAppointmentImage = (appointmentDetails) =>{
+var createAppointmentImage = (appointmentDetails,params) =>{
 
-  var template_content = fs.readFileSync('public/appointment_template.html','utf8');
-  console.log(template_content);
-  template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
-  try{
-    fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
-  }catch(e){
-    console.log(e);
-  }
-  
+  return new Promise((resolve,reject) => {
+    userConversation.getUserConversation(params.userId)
+      .then((lastConversation) => {
+        let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
+        var template_content = fs.readFileSync('public/appointment_template.html','utf8');
+        console.log(template_content);
+        console.log(timezone);
+        let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
+        let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
+        console.log(timeZoneStartTime.format());
+        console.log(timeZoneStartTime.format('hh:mm'));
 
-  console.log("Creating Appointment image", appointmentDetails);
-  return new Promise((resolve) => {
-    const nightmare = Nightmare();
-    console.log("SERVER_url ",facebook.SERVER_URL);
-    nightmare
-    .viewport(300, 350)
-    .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
-    
-    .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
-    .end()
-    .then(() => {
-      
-      console.log('screenshot is done');
-      resolve(facebook.SERVER_URL+'/appointment_content_appointmentDetails.appointment.qpId+'.png);
-    })
+
+
+        template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
+        template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('hh:mm') + ' - ' + timeZoneEndTime.format('hh:mm'));
+        let ld = timeZoneStartTime.localeData();
+        template_content = template_content.replace('[DATE]',timeZoneStartTime.format('dddd, MMMM Do YYYY'));
+        template_content = template_content.replace('[BRANCH_NAME]',appointmentDetails.appointment.branch.name);
+        template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
+        template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
+        template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
+        console.log(ld.weekdays(timeZoneStartTime));
+
+
+
+
+        try{
+          fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
+        }catch(e){
+          console.log(e);
+        }
+        console.log("Creating Appointment image", appointmentDetails);
+
+        const nightmare = Nightmare();
+        console.log("SERVER_url ",facebook.SERVER_URL);
+        nightmare
+        .viewport(300, 350)
+        .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+        
+        .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
+        .end()
+        .then(() => {
+          
+          console.log('screenshot is done');
+          resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
+        })
+      });  
   });
+
 }
 
 var processingResponse = ((response,params,profile,action,intentFlow,entityMap) => {
