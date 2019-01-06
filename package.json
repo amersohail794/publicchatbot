@@ -2,9 +2,9 @@
   "name": "messenger-get-started",
   "version": "1.0.0",
   "description": "Get started example for Messenger Platform",
-  "main": "app.js",
+  "main": "reverseproxy.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "node reverseproxy.js",
     "lint": "jshint --exclude node_modules .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -25,6 +25,7 @@
     "nanotimer": "^0.3.15",
     "nightmare": "^3.0.1",
     "puppeteer-core": "^1.11.0",
+    "redbird": "^0.9.0",
     "request": "^2.72.0"
   },
   "engines": {
