@@ -13,6 +13,7 @@ const
   NanoTimer = require('nanotimer'),
   Nightmare = require ('nightmare'),
   moment = require('moment-timezone'),
+  puppeteer = require('puppeteer'),
   fs = require('fs');
   
 
@@ -642,25 +643,42 @@ var createAppointmentImage = (appointmentDetails,params) =>{
         }
         console.log("Creating Appointment image", appointmentDetails);
 
-        const nightmare = Nightmare();
-        console.log("SERVER_url ",facebook.SERVER_URL);
-        nightmare
-        .viewport(300, 350)
-        .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
         
-        .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
-        .end()
-        .then(() => {
+
+
+
+      takeScreenshot(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html',appointmentDetails.appointment.qpId);
+
+
+        // const nightmare = Nightmare();
+        // console.log("SERVER_url ",facebook.SERVER_URL);
+        // nightmare
+        // .viewport(300, 350)
+        // .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+        
+        // .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
+        // .end()
+        // .then(() => {
           
-          console.log('screenshot is done');
-          resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
-        })
-        .catch((e) => {
-          console.log("Error in getting screenshot ",e);
-        })
+        //   console.log('screenshot is done');
+        //   resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
+        // })
+        // .catch((e) => {
+        //   console.log("Error in getting screenshot ",e);
+        // })
       });  
   });
 
+}
+
+async function takeScreenshot(url,id) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  
+  await page.goto(url);
+  await page.screenshot({ path: 'public/appointment_content_'+id+'.png' });
+  
+  browser.close();
 }
 
 var processingResponse = ((response,params,profile,action,intentFlow,entityMap) => {
