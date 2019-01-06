@@ -655,6 +655,9 @@ var createAppointmentImage = (appointmentDetails,params) =>{
           console.log('screenshot is done');
           resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
         })
+        .catch((e) => {
+          console.log("Error in getting screenshot ",e);
+        })
       });  
   });
 
