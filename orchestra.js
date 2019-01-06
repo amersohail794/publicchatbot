@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const properties = {
-    ORCHESTRA_URL :'http://192.168.98.19:8080/',
+    ORCHESTRA_URL :'http://192.168.98.19:10002/',
     API_GATEWAY_URL : 'http://192.168.98.19:9090/',
     MOBILE_USER_ID : 'd0516eee-a32d-11e5-bf7f-feff819cdc9f',
     CALENDAR_USER_ID: 'c7a1331a-32d-11e5-bf7f-feff819acdc9f',
