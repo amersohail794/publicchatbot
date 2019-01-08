@@ -15,17 +15,17 @@ const app = require('../app');
 
 // requestProcessor.process(params);
 
-// var params = {
-//     userId: "1697938176985929",
-//     timeOfMessage: 1533551973516,
-//     utterance: "Medical Test",
-//     quickReply: {
-//       payload: "RenewVisa.AppointmentForMedical"
-//     },
-//     messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
-//   }
+var params = {
+    userId: "1697938176985929",
+    timeOfMessage: 1533551973516,
+    utterance: "Medical Test",
+    quickReply: {
+      payload: "RenewVisa.AppointmentForMedical"
+    },
+    messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
+  }
 
-// requestProcessor.processQuickReply(params);
+requestProcessor.processQuickReply(params);
 
 
 
@@ -67,12 +67,12 @@ const app = require('../app');
 // app.receivedPostback(event);
 
 
-var param2 = {
-    userId: "1697938176985929",
-    utterance: 'tomorrow at 2pm'
-}
+// var param2 = {
+//     userId: "1697938176985929",
+//     utterance: 'tomorrow at 2pm'
+// }
 
-requestProcessor.process(param2);
+// requestProcessor.process(param2);
 
 // var p3 = {
 //     userId: "1697938176985929",
@@ -88,8 +88,8 @@ requestProcessor.process(param2);
 
 
 
-var appointmentInfo = {
-  service : 'TESTING SERVICE'
-};
-requestProcessor.createAppointmentImage(appointmentInfo);
+// var appointmentInfo = {
+//   service : 'TESTING SERVICE'
+// };
+// requestProcessor.createAppointmentImage(appointmentInfo);
 

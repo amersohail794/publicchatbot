@@ -12,7 +12,9 @@ const properties = {
     BRANCH_PUBLIC_DETAIL: 'rest/calendar-backend/api/v1/branches/{{BRANCH_INTERNAL_ID}}',
     CALENDAR_USER : Buffer.from("superadmin:ulan").toString('base64'),
     APPOINTMENT_BOOKING : 'calendar-backend/public/api/v2/branches/{{BRANCH_PUBLIC_ID}}/dates/{{DATE}}/times/{{TIME}}/book',
-    APPOINTMENT_DETAIL: 'rest/calendar-backend/api/v1/appointments/publicid/{{APPOINTMENT_PUBLIC_ID}}'
+    APPOINTMENT_DETAIL: 'rest/calendar-backend/api/v1/appointments/publicid/{{APPOINTMENT_PUBLIC_ID}}',
+    SEARCH_CUSTOMER : 'rest/calendar-backend/api/v1/customers/search/?externalId={{EXTERNAL_ID}}',
+    CREATE_CUSTOMER : 'rest/calendar-backend/api/v1/customers',
 }
 //geo/services/7/nearestbranches?latitude=25.077265790923&longitude=55.150239192244&maxNrOfBranches=4
 // http://127.0.0.1:9090/rest/calendar-backend/api/v1/branches/1
@@ -42,6 +44,11 @@ var connectionDetails = (dataType) => {
             break;
         }
         case 'APPOINTMENT_DETAIL':{
+            url = properties.API_GATEWAY_URL + properties.APPOINTMENT_DETAIL;
+            userId = properties.CALENDAR_USER_ID;
+            break;
+        }
+        case 'SEARCH_CUSTOMER':{
             url = properties.API_GATEWAY_URL + properties.APPOINTMENT_DETAIL;
             userId = properties.CALENDAR_USER_ID;
             break;

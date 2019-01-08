@@ -21,6 +21,7 @@ const
   flow = require('./flow'),
   luis = require('./luis'),
   facebook = require('./facebook'),
+  globalObjectsFactory = require('./global-objects'),
   requestProcessor = require('./request-processor');
 
 
@@ -245,16 +246,18 @@ function receivedMessage(event) {
   var messageAttachments = message.attachments;
   var quickReply = message.quick_reply;
   
-  var params = {
-    userId : senderID,
-    timeOfMessage : timeOfMessage,
-    utterance : messageText,
-    attachments : messageAttachments,
-    quickReply : quickReply,
-    postback : undefined,
-    appId, appId,
-    messageId : messageId
-  }
+    var params = globalObjectsFactory.getRequestParam();
+
+  
+    params.userId = senderID;
+    params.timeOfMessage = timeOfMessage;
+    params.utterance = messageText;
+    params.attachments = messageAttachments;
+    params.quickReply = quickReply;
+    params.postback = undefined;
+    params.appId = appId;
+    params.messageId = messageId;
+  
 
   console.log("Params: -> " + JSON.stringify(params,undefined,2));
   console.log(`Message: ${messageText}`);
@@ -414,16 +417,12 @@ function receivedPostback(event) {
   // button for Structured Messages.
   var payload = event.postback.payload;
 
-  var params = {
-    userId : senderID,
-    timeOfMessage : timeOfPostback,
-    utterance : undefined,
-    attachments : undefined,
-    quickReply : undefined,
-    postback : undefined,
-    appId: undefined,
-    messageId : undefined 
-  }
+  var params = globalObjectsFactory.getRequestParam();
+
+  
+    params.userId = senderID;
+    params.timeOfMessage = timeOfPostback;
+   
 
   
 

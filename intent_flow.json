@@ -371,6 +371,14 @@
                 "responses":[
                         [{
                             "responseType":"ApiGatewayJson",
+                            "processingFunction":"SearchCustomerFromOrchestra"
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
+                            "processingFunction":"CreateCustomerIfNeeded"
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
                             "processingFunction":"ConfirmAppointment"
                         }],
                         [{
