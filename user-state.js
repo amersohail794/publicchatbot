@@ -1,6 +1,9 @@
 const
     userConversation = require('./user-conversation'),
-    orchestra = require('./orchestra')
+    orchestra = require('./orchestra'),
+    serviceMappings = require('./service-mapping.js');
+
+const allServiceMappings = serviceMappings.loadAllMappings();
 
 var collectUserState =  ((processData) => {
     var attributes = new Map();

@@ -1,17 +1,23 @@
+const
+    facebook = require('./facebook'),
+    userConversation = require('./user-conversation'),
+    orchestra = require('./orchestra');
+
 var processingApiGatewayJsonResponse =  ( (processData) => {
     // console.log("I am insdie APIGateway")
-    console.log(response.processingFunction);
-    if (response.processingFunction === 'FindBranches'){
+    console.log(processData.actionCurrentResponse.processingFunction);
+    if (processData.actionCurrentResponse.processingFunction === 'FindBranches'){
       
       return new Promise((resolve,reject) => {
   
-        var latitude = params.attachments[0].payload.coordinates.lat;
-        var longitude = params.attachments[0].payload.coordinates.long;
+        var latitude = processData.requestParams.attachments[0].payload.coordinates.lat;
+        var longitude = processData.requestParams.attachments[0].payload.coordinates.long;
   
-        userConversation.getUserConversation(params.userId).then((lastConversation) => {
+        userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
   
           return orchestra.makeRequest('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.activeUsecase.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
         }).then((branches) => { //process branches data
+            console.log("processing branches from orchestra");
           var branchList = new Array();
   
           branches.forEach((branch) => {
@@ -22,16 +28,16 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
               actions : [] 
             };
   
-            branchData.actions.push({type : 'postback', title : 'Select', payload : intentFlow.usecase + '.' + intentFlow.stepName + '.selectedLocation.'+branch.id});
+            branchData.actions.push({type : 'postback', title : 'Select', payload : processData.intentFlow.usecase + '.' + processData.intentFlow.stepName + '.selectedLocation.'+branch.id});
             branchList.push(branchData);
           });
   
-          return facebook.sendGenericMessage(params.userId,branchList);
+          return facebook.sendGenericMessage(processData.requestParams.userId,branchList);
         
         }).then(_ =>  resolve(true)) //acknowledged from facebook
         .catch((error) => {
           console.log("Error -> " + JSON.stringify(error,undefined,2));
-          facebook.sendTextMessage(params.userId,"There is problem in retrieving branches. Please try later");
+          facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving branches. Please try later");
           reject("Error -> " + JSON.stringify(error,undefined,2));
         });
       }); //ended promise execution
@@ -45,12 +51,12 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
   
   
     }
-    else if (response.processingFunction === 'CheckAvailability'){
+    else if (processData.actionCurrentResponse.processingFunction === 'CheckAvailability'){
         console.log("Checking Availability");
   
         return new Promise((resolve,reject) => {
   
-          let ent = entityMap.get('builtin.datetimeV2.datetime');
+          let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
           console.log("entity -> " + JSON.stringify(ent,undefined,2));
           let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
           console.log("Entity Value -> " + entityValue);
@@ -60,7 +66,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
           let timeParts = time.split(':');
           let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
           console.log("TimeFormatted -> " + timeFormat);
-          userConversation.getUserConversation(params.userId).then((lastConversation) => {
+          userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
             return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: date})),'get');  
           }).then((availableTimes) => {
             
@@ -76,23 +82,23 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
             if (slotFound){
               console.log("Setting runtime.datetime.value -> " + entityValue);
               
-              entityMap.set('runtime.datetime.value',entityValue);
+              processData.entityMap.set('runtime.datetime.value',entityValue);
             }
             resolve(true);
             
             
           }).catch((error) => {
             console.log("Error -> " + JSON.stringify(error,undefined,2));
-            facebook.sendTextMessage(params.userId,"There is problem in retrieving timeslots");
+            facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving timeslots");
             reject("Error -> " + JSON.stringify(error,undefined,2));
           });
         }) //end of promise
     }
-    else if (response.processingFunction ==='ConfirmAppointment'){
+    else if (processData.actionCurrentResponse.processingFunction ==='ConfirmAppointment'){
       console.log("Confirming Appointment...");
   
       return new Promise((resolve,reject) => {
-        userConversation.getUserConversation(params.userId)
+        userConversation.getUserConversation(processData.requestParams.userId)
           .then((lastConversation) => {
           let selectedTime = lastConversation.activeUsecase.attributes.selectedTime;
           let selectedTimeComponents = selectedTime.split(':');
@@ -116,13 +122,13 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
       });
   
       
-    }else if (response.processingFunction ==='SearchCustomerFromOrchestra'){
+    }else if (processData.actionCurrentResponse.processingFunction ==='SearchCustomerFromOrchestra'){
       console.log("searching Customer... ");
   
       return new Promise((resolve,reject) => {
         
           return orchestra.makeRequest('SEARCH_CUSTOMER',new Map(Object.entries(
-            {EXTERNAL_ID:params.userId}
+            {EXTERNAL_ID:processData.requestParams.userId}
             )),'get',postData)
             .then((customerDetails) => {
   
@@ -142,11 +148,11 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
       });
   
       
-    }else if (response.processingFunction ==='SendAppointmentDetail'){
+    }else if (processData.actionCurrentResponse.processingFunction ==='SendAppointmentDetail'){
       console.log("Sending Appointment Detail...");
   
       return new Promise((resolve,reject) => {
-        userConversation.getUserConversation(params.userId)
+        userConversation.getUserConversation(processData.requestParams.userId)
           .then((lastConversation) => {
           let appointmentPublicId = lastConversation.activeUsecase.attributes.appointmentConfirmationPublicId;
          
@@ -155,10 +161,10 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
               )),'get');  
         }).then((appointmentDetails) => {
           
-          createAppointmentImage(appointmentDetails,params).then((imageURL) => {
+          createAppointmentImage(appointmentDetails,processData.requestParams).then((imageURL) => {
             console.log("image URL " + imageURL);
-            facebook.sendTextMessage(params.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
-            facebook.sendImageMessage(params.userId,imageURL)
+            facebook.sendTextMessage(processData.requestParams.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
+            facebook.sendImageMessage(processData.requestParams.userId,imageURL)
             resolve(appointmentDetails);
           });
   

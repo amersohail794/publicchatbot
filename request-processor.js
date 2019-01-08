@@ -21,7 +21,7 @@ const
 
     
 
-const allServiceMappings = serviceMappings.loadAllMappings();
+
 
 var process = (params) => {
 
