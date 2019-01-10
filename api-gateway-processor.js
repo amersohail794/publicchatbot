@@ -95,31 +95,37 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
         }) //end of promise
     }
     else if (processData.actionCurrentResponse.processingFunction ==='ConfirmAppointment'){
-      console.log("Confirming Appointment...");
-  
-      return new Promise((resolve,reject) => {
-        userConversation.getUserConversation(processData.requestParams.userId)
-          .then((lastConversation) => {
-          let selectedTime = lastConversation.activeUsecase.attributes.selectedTime;
-          let selectedTimeComponents = selectedTime.split(':');
-          let selectedTimeFormat = selectedTimeComponents[0] + ':' +selectedTimeComponents[1];
-          let postData = {
-            services : [{publicId : lastConversation.activeUsecase.attributes.selectedServicePublicId}],
-            customers : []
-          };
-          return orchestra.makeRequest('CONFIRM_APPOINTMENT',new Map(Object.entries(
-              {SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,
-                BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,
-                DATE: lastConversation.activeUsecase.attributes.selectedDate,
-                TIME : selectedTimeFormat}
-              )),'post',postData);  
-        }).then((appointmentDetails) => {
-          
-          //facebook.sendTextMessage("Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
-          resolve(appointmentDetails);
+        console.log("Confirming Appointment...");
+
+        return new Promise((resolve,reject) => {
+            userConversation.getUserConversation(processData.requestParams.userId)
+                .then((lastConversation) => {
+                let selectedTime = lastConversation.activeUsecase.attributes.selectedTime;
+                let selectedTimeComponents = selectedTime.split(':');
+                let selectedTimeFormat = selectedTimeComponents[0] + ':' +selectedTimeComponents[1];
+                let postData = {
+                services : [{publicId : lastConversation.activeUsecase.attributes.selectedServicePublicId}],
+                customers : []
+                };
+
+                if (lastConversation.activeUsecase.attributes.customerOrchestraPublicId != null){
+                    postData.customers.push(lastConversation.activeUsecase.attributes.customerOrchestraPublicId);
+                }
+
+                return orchestra.makeRequest('CONFIRM_APPOINTMENT',new Map(Object.entries(
+                    {SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,
+                    BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,
+                    DATE: lastConversation.activeUsecase.attributes.selectedDate,
+                    TIME : selectedTimeFormat}
+                    )),'post',postData);
+
+            }).then((appointmentDetails) => {
+                
+                //facebook.sendTextMessage("Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
+                resolve(appointmentDetails);
+            });
+
         });
-  
-      });
   
       
     }else if (processData.actionCurrentResponse.processingFunction ==='SearchCustomerFromOrchestra'){
@@ -127,14 +133,14 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
   
       return new Promise((resolve,reject) => {
         
-          return orchestra.makeRequest('SEARCH_CUSTOMER',new Map(Object.entries(
+        return orchestra.makeRequest('SEARCH_CUSTOMER',new Map(Object.entries(
             {EXTERNAL_ID:processData.requestParams.userId}
-            )),'get',postData)
+            )),'get',null)
             .then((customerDetails) => {
   
-              console.log("Total Customers Found -> ",customerDetails.totalResults);
+              console.log("Total Customers Found -> ",customerDetails.meta.totalResults);
   
-              if (customerDetails.totalResults === 0){
+              if (customerDetails.meta.totalResults === 0){
                 resolve();
                 return; 
               }
@@ -146,7 +152,39 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
         });
   
       });
-  
+      
+    }else if (processData.actionCurrentResponse.processingFunction ==='CreateCustomerIfNeeded'){
+        console.log("Creating Customer If Needed... ");
+        lastConversation.activeUsecase.attributes.selectedBranchPublicId
+        return new Promise((resolve,reject) => {
+            userConversation.getUserConversation(processData.requestParams.userId)
+                .then((lastConversation) => {
+                let orchestraPublicId = lastConversation.activeUsecase.attributes.customerOrchestraPublicId;
+
+                if (orchestraPublicId != null){
+                    resolve();
+                }
+                else{
+
+                    let postData = {
+                        firstName = processData.profile.first_name,
+                        lastName = processData.profile.last_name,
+                        externalId = processData.requestParams.userId
+                    }
+
+                    return orchestra.makeRequest('CREATE_CUSTOMER',new Map(),'post',postData); 
+
+
+                }
+
+
+               
+            }).then((customerDetails) => {
+                    
+                //facebook.sendTextMessage("Your appointment is confirmed wtih refernce id " + appointmentDetails.appointment.qpId) ;
+                resolve(customerDetails);
+            });
+        });
       
     }else if (processData.actionCurrentResponse.processingFunction ==='SendAppointmentDetail'){
       console.log("Sending Appointment Detail...");

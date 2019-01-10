@@ -49,7 +49,12 @@ var connectionDetails = (dataType) => {
             break;
         }
         case 'SEARCH_CUSTOMER':{
-            url = properties.API_GATEWAY_URL + properties.APPOINTMENT_DETAIL;
+            url = properties.API_GATEWAY_URL + properties.SEARCH_CUSTOMER;
+            userId = properties.CALENDAR_USER_ID;
+            break;
+        }
+        case 'CREATE_CUSTOMER':{
+            url = properties.API_GATEWAY_URL + properties.CREATE_CUSTOMER;
             userId = properties.CALENDAR_USER_ID;
             break;
         }

@@ -91,7 +91,12 @@ var collectUserState =  ((processData) => {
               }
               case 'SearchCustomer':{
                 if (processData.actionCurrentResponse != undefined){
-                  attributes.set("customerOrchestraId",processData.actionCurrentResponse.publicId);
+                  attributes.set("customerOrchestraPublicId",processData.actionCurrentResponse.publicId);
+                }
+              }
+              case 'CreateCustomer':{
+                if (processData.actionCurrentResponse != undefined){
+                  attributes.set("customerOrchestraPublicId",processData.actionCurrentResponse.publicId);
                 }
               }
               
