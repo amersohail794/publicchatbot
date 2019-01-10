@@ -1,7 +1,8 @@
 const
     facebook = require('./facebook'),
     userConversation = require('./user-conversation'),
-    orchestra = require('./orchestra');
+    orchestra = require('./orchestra'),
+    fs = require('fs');
 
 var processingApiGatewayJsonResponse =  ( (processData) => {
     // console.log("I am insdie APIGateway")
@@ -155,7 +156,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
       
     }else if (processData.actionCurrentResponse.processingFunction ==='CreateCustomerIfNeeded'){
         console.log("Creating Customer If Needed... ");
-        lastConversation.activeUsecase.attributes.selectedBranchPublicId
+
         return new Promise((resolve,reject) => {
             userConversation.getUserConversation(processData.requestParams.userId)
                 .then((lastConversation) => {
@@ -167,9 +168,9 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
                 else{
 
                     let postData = {
-                        firstName = processData.profile.first_name,
-                        lastName = processData.profile.last_name,
-                        externalId = processData.requestParams.userId
+                        firstName : processData.profile.first_name,
+                        lastName : processData.profile.last_name,
+                        externalId : processData.requestParams.userId
                     }
 
                     return orchestra.makeRequest('CREATE_CUSTOMER',new Map(),'post',postData); 
