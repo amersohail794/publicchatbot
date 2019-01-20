@@ -90,13 +90,13 @@ var collectUserState =  ((processData) => {
                
               }
               case 'SearchCustomerFromOrchestra':{
-                if (processData.actionCurrentResponse != undefined){
+                if (processData.responseExecutionOutput != undefined){
                     console.log("Setting customer public id to attributes");
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
               }
               case 'CreateCustomerIfNeeded':{
-                if (processData.actionCurrentResponse != undefined){
+                if (processData.responseExecutionOutput != undefined){
                     console.log("Setting customer public id to attributes");
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }

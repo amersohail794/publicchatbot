@@ -112,7 +112,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
                 };
 
                 if (lastConversation.activeUsecase.attributes.customerOrchestraPublicId != null){
-                    postData.customers.push(lastConversation.activeUsecase.attributes.customerOrchestraPublicId);
+                    postData.customers.push({ publicId : lastConversation.activeUsecase.attributes.customerOrchestraPublicId});
                 }
 
                 return orchestra.makeRequest('CONFIRM_APPOINTMENT',new Map(Object.entries(
