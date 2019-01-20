@@ -2,7 +2,9 @@ const
     facebook = require('./facebook'),
     userConversation = require('./user-conversation'),
     orchestra = require('./orchestra'),
-    fs = require('fs');
+    fs = require('fs'),
+    Nightmare = require ('nightmare'),
+    moment = require('moment-timezone');
 
 var processingApiGatewayJsonResponse =  ( (processData) => {
     // console.log("I am insdie APIGateway")

@@ -165,13 +165,16 @@ var saveUserConversation = ((userId,intentFlow,attributesMap) => {
       //Step 6 - If intent is with usecase and there is same activeUsecase but step varies,
       // then put the currentStep as completed, pull new step from pendingSteps and make it active
       if (intentWithUsecase && activeUsecaseFound && intentFlow.stepName !== userConversation.activeUsecase.currentStep){
-        userConversation.activeUsecase.completedSteps.push(userConversation.activeUsecase.currentStep);
-        if (userConversation.activeUsecase.pendingSteps.length > 0){
-          userConversation.activeUsecase.currentStep = userConversation.activeUsecase.pendingSteps[0];
-          userConversation.activeUsecase.pendingSteps.splice(0,1);
-        }
-        else
-          userConversation.activeUsecase.currentStep = undefined;
+            
+            if (userConversation.activeUsecase.currentStep != undefined)
+                userConversation.activeUsecase.completedSteps.push(userConversation.activeUsecase.currentStep);
+
+            if (userConversation.activeUsecase.pendingSteps.length > 0){
+            userConversation.activeUsecase.currentStep = userConversation.activeUsecase.pendingSteps[0];
+            userConversation.activeUsecase.pendingSteps.splice(0,1);
+            }
+            else
+            userConversation.activeUsecase.currentStep = undefined;
         
         
       }
@@ -190,7 +193,9 @@ var saveUserConversation = ((userId,intentFlow,attributesMap) => {
 
       //Step 7 - if there is activeUsecase, then copy attributes to that activeUsecase
       if (activeUsecaseFound && attributesMap !== undefined){
+        
         for (let [attributeKey, attributeValue] of attributesMap.entries()) {
+            console.log("Setting user attributes -> " + attributeKey + "  -> " + attributeValue);
           userConversation.activeUsecase.attributes[attributeKey] = attributeValue;
         }
       }

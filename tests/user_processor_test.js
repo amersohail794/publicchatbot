@@ -15,17 +15,17 @@ const app = require('../app');
 
 // requestProcessor.process(params);
 
-// var params = {
-//     userId: "1697938176985929",
-//     timeOfMessage: 1533551973516,
-//     utterance: "Medical Test",
-//     quickReply: {
-//       payload: "RenewVisa.AppointmentForMedical"
-//     },
-//     messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
-//   }
+var params = {
+    userId: "1697938176985929",
+    timeOfMessage: 1533551973516,
+    utterance: "Medical Test",
+    quickReply: {
+      payload: "RenewVisa.AppointmentForMedical"
+    },
+    messageId: "WrLkoxlP8mbkZLn2Ga0eacspnxwpuQwgIgDJOmopljfSqqWApJXuKSvlcA2d5ygtryPX12Ig6-ru8i4lJcL8ow"
+  }
 
-// requestProcessor.processQuickReply(params);
+requestProcessor.processQuickReply(params);
 
 
 

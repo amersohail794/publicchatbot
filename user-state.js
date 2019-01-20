@@ -84,21 +84,21 @@ var collectUserState =  ((processData) => {
                   attributes.set("status","APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST");
                 }
                 else if (processData.actionCurrentResponse !== undefined && processData.actionCurrentResponse.appointment !== undefined){
-                  attributes.set("appointmentqpId",responseResult.appointment.qpId);
-                  attributes.set("appointmentId",responseResult.appointment.id);
+                  attributes.set("appointmentqpId",processData.actionCurrentResponse.appointment.qpId);
+                  attributes.set("appointmentId",processData.actionCurrentResponse.appointment.id);
                 }
                
               }
               case 'SearchCustomerFromOrchestra':{
                 if (processData.actionCurrentResponse != undefined){
                     console.log("Setting customer public id to attributes");
-                  attributes.set("customerOrchestraPublicId",processData.actionCurrentResponse.publicId);
+                  attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
               }
               case 'CreateCustomerIfNeeded':{
                 if (processData.actionCurrentResponse != undefined){
                     console.log("Setting customer public id to attributes");
-                  attributes.set("customerOrchestraPublicId",processData.actionCurrentResponse.publicId);
+                  attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
               }
               
