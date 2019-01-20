@@ -246,7 +246,7 @@ async function createAppointmentImage(appointmentDetails,params){
     template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
     template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
     
-    let code = createQRCode(appointmentDetails.appointment.qpId);
+    let code = await createQRCode(appointmentDetails.appointment.qpId);
     template_content = template_content.replace('[QRCODE]',code);
 
     console.log(ld.weekdays(timeZoneStartTime));
@@ -264,7 +264,7 @@ async function createAppointmentImage(appointmentDetails,params){
     const nightmare = Nightmare();
     console.log("SERVER_url ",facebook.SERVER_URL);
     await nightmare
-        .viewport(300, 350)
+        .viewport(300, 460)
         .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
         
         .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 

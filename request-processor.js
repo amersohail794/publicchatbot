@@ -36,6 +36,16 @@ var process = (params) => {
         userConversation.getUserConversation(params.userId).then((lastConversation) => {
             console.log("LastConversation",lastConversation);
 
+            if (params.utterance == 'reset'){
+                if (lastConversation != undefined){
+                    userConversation.clearUserConversation();
+
+                }
+
+                facebook.sendTextMessage(params.userId,"reset done");
+                return;
+            }
+
             if (lastConversation == undefined)
                 flow.findFlow("NewCustomer").then(onFlowFound.bind(null,processData));    
             else if (params.utterance === 'Internal.proceed'){

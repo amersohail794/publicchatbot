@@ -210,6 +210,8 @@ var saveUserConversation = ((userId,intentFlow,attributesMap) => {
    
 });
 
+
+
 var saveConversations = (conversations) => {
 
   return new Promise((resolve) => {
@@ -220,7 +222,15 @@ var saveConversations = (conversations) => {
   
 };
 
+var clearUserConversation = () => {
+
+   return saveConversations([]);
+  
+    
+  };
+
 module.exports.saveUserConversation = saveUserConversation;
 module.exports.getUserConversation = getUserConversation;
 module.exports.getNextStep = getNextStep;
 module.exports.moveActiveUsecaseToInprocess = moveActiveUsecaseToInprocess;
+module.exports.clearUserConversation = clearUserConversation;
