@@ -4,7 +4,8 @@ const
     orchestra = require('./orchestra'),
     fs = require('fs'),
     Nightmare = require ('nightmare'),
-    moment = require('moment-timezone');
+    moment = require('moment-timezone'),
+    qrcode = require('qrcode');
 
 var processingApiGatewayJsonResponse =  ( (processData) => {
     // console.log("I am insdie APIGateway")
@@ -244,6 +245,10 @@ async function createAppointmentImage(appointmentDetails,params){
     template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
     template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
     template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
+    
+    let code = createQRCode(appointmentDetails.appointment.qpId);
+    template_content = template_content.replace('[QRCODE]',code);
+
     console.log(ld.weekdays(timeZoneStartTime));
 
 
@@ -263,11 +268,16 @@ async function createAppointmentImage(appointmentDetails,params){
         .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
         
         .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
-        .end()
+        .end();
     console.log('screenshot is done');
-    resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
-    
+    return facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png';
 
+
+}
+
+async function createQRCode(appointmentId){
+    let res = await qrcode.toDataURL(appointmentId);
+    return res;
 }
 
   
