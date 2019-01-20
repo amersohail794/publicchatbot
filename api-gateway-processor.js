@@ -220,70 +220,119 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
       console.log("No APIGateway processing found")
     }
   });
+
+  
+async function createAppointmentImage(appointmentDetails,params){
+    let lastConversation = await userConversation.getUserConversation(params.userId);
+
+    let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
+    var template_content = fs.readFileSync('public/appointment_template.html','utf8');
+    console.log(template_content);
+    console.log(timezone);
+    let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
+    let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
+    console.log(timeZoneStartTime.format());
+    console.log(timeZoneStartTime.format('hh:mm'));
+
+
+
+    template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
+    template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('hh:mm') + ' - ' + timeZoneEndTime.format('hh:mm'));
+    let ld = timeZoneStartTime.localeData();
+    template_content = template_content.replace('[DATE]',timeZoneStartTime.format('dddd, MMMM Do YYYY'));
+    template_content = template_content.replace('[BRANCH_NAME]',appointmentDetails.appointment.branch.name);
+    template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
+    template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
+    template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
+    console.log(ld.weekdays(timeZoneStartTime));
+
+
+
+
+    try{
+        fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
+    }catch(e){
+        console.log(e);
+    }
+    console.log("Creating Appointment image", appointmentDetails);
+
+    const nightmare = Nightmare();
+    console.log("SERVER_url ",facebook.SERVER_URL);
+    await nightmare
+        .viewport(300, 350)
+        .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+        
+        .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
+        .end()
+    console.log('screenshot is done');
+    resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
+    
+
+}
+
+  
+//   var createAppointmentImage = (appointmentDetails,params) =>{
+  
+//     return new Promise((resolve,reject) => {
+//       userConversation.getUserConversation(params.userId)
+//         .then((lastConversation) => {
+//           let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
+//           var template_content = fs.readFileSync('public/appointment_template.html','utf8');
+//           console.log(template_content);
+//           console.log(timezone);
+//           let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
+//           let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
+//           console.log(timeZoneStartTime.format());
+//           console.log(timeZoneStartTime.format('hh:mm'));
   
   
-  var createAppointmentImage = (appointmentDetails,params) =>{
   
-    return new Promise((resolve,reject) => {
-      userConversation.getUserConversation(params.userId)
-        .then((lastConversation) => {
-          let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
-          var template_content = fs.readFileSync('public/appointment_template.html','utf8');
-          console.log(template_content);
-          console.log(timezone);
-          let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
-          let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
-          console.log(timeZoneStartTime.format());
-          console.log(timeZoneStartTime.format('hh:mm'));
-  
-  
-  
-          template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
-          template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('hh:mm') + ' - ' + timeZoneEndTime.format('hh:mm'));
-          let ld = timeZoneStartTime.localeData();
-          template_content = template_content.replace('[DATE]',timeZoneStartTime.format('dddd, MMMM Do YYYY'));
-          template_content = template_content.replace('[BRANCH_NAME]',appointmentDetails.appointment.branch.name);
-          template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
-          template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
-          template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
-          console.log(ld.weekdays(timeZoneStartTime));
+//           template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
+//           template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('hh:mm') + ' - ' + timeZoneEndTime.format('hh:mm'));
+//           let ld = timeZoneStartTime.localeData();
+//           template_content = template_content.replace('[DATE]',timeZoneStartTime.format('dddd, MMMM Do YYYY'));
+//           template_content = template_content.replace('[BRANCH_NAME]',appointmentDetails.appointment.branch.name);
+//           template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
+//           template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
+//           template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
+//           console.log(ld.weekdays(timeZoneStartTime));
   
   
   
   
-          try{
-            fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
-          }catch(e){
-            console.log(e);
-          }
-          console.log("Creating Appointment image", appointmentDetails);
+//           try{
+//             fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
+//           }catch(e){
+//             console.log(e);
+//           }
+//           console.log("Creating Appointment image", appointmentDetails);
   
           
   
   
   
-       // takeScreenshot(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html',appointmentDetails.appointment.qpId);
+//        // takeScreenshot(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html',appointmentDetails.appointment.qpId);
   
   
-          const nightmare = Nightmare();
-          console.log("SERVER_url ",facebook.SERVER_URL);
-          nightmare
-          .viewport(300, 350)
-          .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
+//           const nightmare = Nightmare();
+//           console.log("SERVER_url ",facebook.SERVER_URL);
+//           nightmare
+//           .viewport(300, 350)
+//           .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
           
-          .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
-          .end()
-          .then(() => {
+//           .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
+//           .end()
+//           .then(() => {
             
-            console.log('screenshot is done');
-            resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
-          })
-          .catch((e) => {
-            console.log("Error in getting screenshot ",e);
-          })
-        });  
-    });
+//             console.log('screenshot is done');
+//             resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
+//           })
+//           .catch((e) => {
+//             console.log("Error in getting screenshot ",e);
+//           })
+//         });  
+//     });
   
-  }
+//   }
 
 module.exports.processingApiGatewayJsonResponse = processingApiGatewayJsonResponse;
