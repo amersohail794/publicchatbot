@@ -129,7 +129,7 @@ var onFlowFound = (processData,intentFlow) => {
         console.log("selectedAction ",JSON.stringify(selectedAction,undefined,1));
         if (selectedAction === undefined){
             //lets go for exceptionalFlow
-            let exceptionAction = findExceptionAction(processData.entityMap,intentFlow);
+            let exceptionAction = findExceptionAction(processData);
             if (exceptionAction === undefined){
                 facebook.sendTextMessage(processData.requestParams.userId,"sorry no response is defined yet");
             }
@@ -204,48 +204,86 @@ var findExceptionAction = function(entityMap,intentFlow){
 
 }
 
-var executeAction = function(processData){
+var executeAction = async function(processData){
     console.log("executing action");
     let index = 1;
 
     let p = Promise.resolve();
 
+   
+
+    try{
+        for (var i = 0; i < processData.selectedAction.responses.length; i++){
+            let response = row[Math.floor(Math.random() * processData.selectedAction.responses[i].length)]; //selecting random response
+            console.log("Selected Resposne " + JSON.stringify(response,undefined,2));
+            processData.actionCurrentResponse = response;
+            if (processData.actionCurrentResponse.responseType === 'Internal'){
+                console.log("ResponseType ",processData.actionCurrentResponse.responseType);
+                
+                let p = {
+                  userId : processData.requestParams.userId,
+                  utterance : processData.actionCurrentResponse.responseType + '.' + processData.actionCurrentResponse.text
+                }
+                
+                await process(p);
+                break;
     
-    processData.selectedAction.responses.forEach((row) =>{
-        p = p.then(() => 
+            }else{
+                let responseResult = await responseProcessor.process(processData)
+                processData.responseExecutionOutput = responseResult;
+                await userStateManager.collectUserState(processData);
+                     
+            }
+        }
+    }catch(error){
+        console.log("Error in processing responses " + error);
+
+    }
+
+    
+
+    // processData.selectedAction.responses.forEach((row) =>{
+    //     p = p.then(() => 
             
-            new Promise(resolve =>{
+    //         new Promise((resolve,reject) =>{
 
-                setTimeout(() => {
-                    let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
-                    console.log("Selected Resposne " + JSON.stringify(response,undefined,2));
-                    processData.actionCurrentResponse = response;
+    //             setTimeout(() => {
+                    
+    //                 let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
+    //                 console.log("Selected Resposne " + JSON.stringify(response,undefined,2));
+    //                 processData.actionCurrentResponse = response;
 
-                    if (processData.actionCurrentResponse.responseType === 'Internal'){
-                        console.log("ResponseType ",processData.actionCurrentResponse.responseType);
+    //                 if (processData.actionCurrentResponse.responseType === 'Internal'){
+    //                     console.log("ResponseType ",processData.actionCurrentResponse.responseType);
                         
-                        let p = {
-                          userId : processData.requestParams.userId,
-                          utterance : processData.actionCurrentResponse.responseType + '.' + processData.actionCurrentResponse.text
-                        }
-                        process(p).then(_ => resolve());
-                    }else{
-                        responseProcessor.process(processData).then((responseResult) => {
-                            processData.responseExecutionOutput = responseResult;
-                            userStateManager.collectUserState(processData);
-                            resolve();
-                        });    
-                    }
+    //                     let p = {
+    //                       userId : processData.requestParams.userId,
+    //                       utterance : processData.actionCurrentResponse.responseType + '.' + processData.actionCurrentResponse.text
+    //                     }
+    //                     process(p).then(_ => resolve());
+    //                 }else{
+    //                     responseProcessor   
+    //                         .process(processData)
+    //                             .then((responseResult) => {
+    //                                 processData.responseExecutionOutput = responseResult;
+    //                                 userStateManager.collectUserState(processData);
+    //                                 resolve();
+    //                             })
+    //                             .catch((error) => {
+    //                                 responseFailedType = error;
+    //                                 reject(error);
+    //                             });   
+    //                 }
 
                       
-                },1500); //timeout interval between each response execution        
+    //             },1500); //timeout interval between each response execution        
             
 
             
-            })
-        );
-        // console.log("I am done");
-    });
+    //         })
+    //     );
+    //     // console.log("I am done");
+    // });
   
 
 

@@ -128,7 +128,11 @@ var processingTextResponse = ((processData) => {
       else if (processData.actionCurrentResponse.responseType === 'ApiGatewayJson'){
         console.log("ResponseType ",processData.actionCurrentResponse.responseType);
         apiGatewayProcessor.processingApiGatewayJsonResponse(processData)
-          .then((response) => resolve(response));
+          .then((response) => resolve(response))
+          .catch((error) => {
+              console.log("apigateway processing failed " + error);
+              reject(error);
+          });
        
       }
     //   else if (processData.actionCurrentResponse.responseType === 'Internal'){

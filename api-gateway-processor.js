@@ -87,8 +87,12 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
               console.log("Setting runtime.datetime.value -> " + entityValue);
               
               processData.entityMap.set('runtime.datetime.value',entityValue);
+              resolve(true);
             }
-            resolve(true);
+            else{
+                reject("SlotNotAvailable");
+            }
+            
             
             
           }).catch((error) => {
