@@ -246,7 +246,7 @@ async function createAppointmentImage(appointmentDetails,params){
     template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
     template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
     
-    let code = await createQRCode(appointmentDetails.appointment.qpId);
+    let code = await createQRCode("" +appointmentDetails.appointment.qpId);
     template_content = template_content.replace('[QRCODE]',code);
 
     console.log(ld.weekdays(timeZoneStartTime));
