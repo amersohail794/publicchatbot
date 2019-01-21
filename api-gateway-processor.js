@@ -5,11 +5,12 @@ const
     fs = require('fs'),
     Nightmare = require ('nightmare'),
     moment = require('moment-timezone'),
-    qrcode = require('qrcode');
+    qrcode = require('qrcode'),
+    logger = require('./winstonlogger')(__filename);
 
 var processingApiGatewayJsonResponse =  ( (processData) => {
-    // console.log("I am insdie APIGateway")
-    console.log(processData.actionCurrentResponse.processingFunction);
+    // logger.debug("I am insdie APIGateway")
+    logger.debug(processData.actionCurrentResponse.processingFunction);
     if (processData.actionCurrentResponse.processingFunction === 'FindBranches'){
       
       return new Promise((resolve,reject) => {
@@ -21,7 +22,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
   
           return orchestra.makeRequest('BRANCHES',new Map(Object.entries({SERVICE_ID:lastConversation.activeUsecase.attributes.selectedServiceInternalId,LATITUDE:latitude,LONGITUDE: longitude})),'get');
         }).then((branches) => { //process branches data
-            console.log("processing branches from orchestra");
+            logger.debug("processing branches from orchestra");
           var branchList = new Array();
   
           branches.forEach((branch) => {
@@ -40,7 +41,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
         
         }).then(_ =>  resolve(true)) //acknowledged from facebook
         .catch((error) => {
-          console.log("Error -> " + JSON.stringify(error,undefined,2));
+          logger.debug("Error -> " + JSON.stringify(error,undefined,2));
           facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving branches. Please try later");
           reject("Error -> " + JSON.stringify(error,undefined,2));
         });
@@ -56,20 +57,20 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
   
     }
     else if (processData.actionCurrentResponse.processingFunction === 'CheckAvailability'){
-        console.log("Checking Availability");
+        logger.debug("Checking Availability");
   
         return new Promise((resolve,reject) => {
   
           let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
-          console.log("entity -> " + JSON.stringify(ent,undefined,2));
+          logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
           let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
-          console.log("Entity Value -> " + entityValue);
+          logger.debug("Entity Value -> " + entityValue);
           let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
           let date = valueParts[0]; //2017-05-02
           let time = valueParts[1]; //08:00:00
           let timeParts = time.split(':');
           let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
-          console.log("TimeFormatted -> " + timeFormat);
+          logger.debug("TimeFormatted -> " + timeFormat);
           userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
             return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: date})),'get');  
           }).then((availableTimes) => {
@@ -77,14 +78,14 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
             let slotFound = false;
             availableTimes.times.forEach((t) => {
               if (t === timeFormat){
-                console.log("slot found");
+                logger.debug("slot found");
                 slotFound = true;
               }
                 
               
             });
             if (slotFound){
-              console.log("Setting runtime.datetime.value -> " + entityValue);
+              logger.debug("Setting runtime.datetime.value -> " + entityValue);
               
               processData.entityMap.set('runtime.datetime.value',entityValue);
               resolve(true);
@@ -96,14 +97,14 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
             
             
           }).catch((error) => {
-            console.log("Error -> " + JSON.stringify(error,undefined,2));
+            logger.debug("Error -> " + JSON.stringify(error,undefined,2));
             facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving timeslots");
             reject("Error -> " + JSON.stringify(error,undefined,2));
           });
         }) //end of promise
     }
     else if (processData.actionCurrentResponse.processingFunction ==='ConfirmAppointment'){
-        console.log("Confirming Appointment...");
+        logger.debug("Confirming Appointment...");
 
         return new Promise((resolve,reject) => {
             userConversation.getUserConversation(processData.requestParams.userId)
@@ -137,7 +138,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
   
       
     }else if (processData.actionCurrentResponse.processingFunction ==='SearchCustomerFromOrchestra'){
-      console.log("searching Customer... ");
+      logger.debug("searching Customer... ");
   
       return new Promise((resolve,reject) => {
         
@@ -146,7 +147,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
             )),'get',null)
             .then((customerDetails) => {
   
-              console.log("Total Customers Found -> ",customerDetails.meta.totalResults);
+              logger.debug("Total Customers Found -> ",customerDetails.meta.totalResults);
   
               if (customerDetails.meta.totalResults === 0){
                 resolve();
@@ -162,7 +163,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
       });
       
     }else if (processData.actionCurrentResponse.processingFunction ==='CreateCustomerIfNeeded'){
-        console.log("Creating Customer If Needed... ");
+        logger.debug("Creating Customer If Needed... ");
 
         return new Promise((resolve,reject) => {
             userConversation.getUserConversation(processData.requestParams.userId)
@@ -195,7 +196,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
         });
       
     }else if (processData.actionCurrentResponse.processingFunction ==='SendAppointmentDetail'){
-      console.log("Sending Appointment Detail...");
+      logger.debug("Sending Appointment Detail...");
   
       return new Promise((resolve,reject) => {
         userConversation.getUserConversation(processData.requestParams.userId)
@@ -208,7 +209,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
         }).then((appointmentDetails) => {
           
           createAppointmentImage(appointmentDetails,processData.requestParams).then((imageURL) => {
-            console.log("image URL " + imageURL);
+            logger.debug("image URL " + imageURL);
             facebook.sendTextMessage(processData.requestParams.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
             facebook.sendImageMessage(processData.requestParams.userId,imageURL)
             resolve(appointmentDetails);
@@ -222,7 +223,7 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
       
     }
     else{
-      console.log("No APIGateway processing found")
+      logger.debug("No APIGateway processing found")
     }
   });
 
@@ -232,12 +233,12 @@ async function createAppointmentImage(appointmentDetails,params){
 
     let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
     var template_content = fs.readFileSync('public/appointment_template.html','utf8');
-    console.log(template_content);
-    console.log(timezone);
+    logger.debug(template_content);
+    logger.debug(timezone);
     let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
     let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
-    console.log(timeZoneStartTime.format());
-    console.log(timeZoneStartTime.format('hh:mm'));
+    logger.debug(timeZoneStartTime.format());
+    logger.debug(timeZoneStartTime.format('hh:mm'));
 
 
 
@@ -253,7 +254,7 @@ async function createAppointmentImage(appointmentDetails,params){
     let code = await createQRCode("" +appointmentDetails.appointment.qpId);
     template_content = template_content.replace('[QRCODE]',code);
 
-    console.log(ld.weekdays(timeZoneStartTime));
+    logger.debug(ld.weekdays(timeZoneStartTime));
 
 
 
@@ -261,19 +262,19 @@ async function createAppointmentImage(appointmentDetails,params){
     try{
         fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
     }catch(e){
-        console.log(e);
+        logger.debug(e);
     }
-    console.log("Creating Appointment image", appointmentDetails);
+    logger.debug("Creating Appointment image", appointmentDetails);
 
     const nightmare = Nightmare();
-    console.log("SERVER_url ",facebook.SERVER_URL);
+    logger.debug("SERVER_url ",facebook.SERVER_URL);
     await nightmare
         .viewport(300, 460)
         .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
         
         .screenshot('public/appointment_content_'+appointmentDetails.appointment.qpId+'.png') 
         .end();
-    console.log('screenshot is done');
+    logger.debug('screenshot is done');
     return facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png';
 
 
@@ -292,12 +293,12 @@ async function createQRCode(appointmentId){
 //         .then((lastConversation) => {
 //           let timezone = lastConversation.activeUsecase.attributes.selectedBranchTimezone;
 //           var template_content = fs.readFileSync('public/appointment_template.html','utf8');
-//           console.log(template_content);
-//           console.log(timezone);
+//           logger.debug(template_content);
+//           logger.debug(timezone);
 //           let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
 //           let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
-//           console.log(timeZoneStartTime.format());
-//           console.log(timeZoneStartTime.format('hh:mm'));
+//           logger.debug(timeZoneStartTime.format());
+//           logger.debug(timeZoneStartTime.format('hh:mm'));
   
   
   
@@ -309,7 +310,7 @@ async function createQRCode(appointmentId){
 //           template_content = template_content.replace('[ADDRESS]',lastConversation.activeUsecase.attributes.selectedBranchAddressLine1);
 //           template_content = template_content.replace('[CITY]',lastConversation.activeUsecase.attributes.selectedBranchCity);
 //           template_content = template_content.replace('[COUNTRY]',lastConversation.activeUsecase.attributes.selectedBranchCountry);
-//           console.log(ld.weekdays(timeZoneStartTime));
+//           logger.debug(ld.weekdays(timeZoneStartTime));
   
   
   
@@ -317,9 +318,9 @@ async function createQRCode(appointmentId){
 //           try{
 //             fs.writeFileSync('public/appointment_content_'+appointmentDetails.appointment.qpId+'.html',template_content);  
 //           }catch(e){
-//             console.log(e);
+//             logger.debug(e);
 //           }
-//           console.log("Creating Appointment image", appointmentDetails);
+//           logger.debug("Creating Appointment image", appointmentDetails);
   
           
   
@@ -329,7 +330,7 @@ async function createQRCode(appointmentId){
   
   
 //           const nightmare = Nightmare();
-//           console.log("SERVER_url ",facebook.SERVER_URL);
+//           logger.debug("SERVER_url ",facebook.SERVER_URL);
 //           nightmare
 //           .viewport(300, 350)
 //           .goto(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.html')
@@ -338,11 +339,11 @@ async function createQRCode(appointmentId){
 //           .end()
 //           .then(() => {
             
-//             console.log('screenshot is done');
+//             logger.debug('screenshot is done');
 //             resolve(facebook.SERVER_URL+'/appointment_content_'+appointmentDetails.appointment.qpId+'.png');
 //           })
 //           .catch((e) => {
-//             console.log("Error in getting screenshot ",e);
+//             logger.debug("Error in getting screenshot ",e);
 //           })
 //         });  
 //     });

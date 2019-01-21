@@ -2,7 +2,8 @@ const
   config = require('config'),
   https = require('https'),
   request = require('request'),
-  axios = require('axios');
+  axios = require('axios'),
+  logger = require('./winstonlogger')(__filename);
 
 
 /*
@@ -56,10 +57,10 @@ var callSendAPI = (messageData) => {
         var messageId = body.message_id;
   
         if (messageId) {
-          console.log("Successfully sent message with id %s to recipient %s",
+          logger.debug("Successfully sent message with id %s to recipient %s",
             messageId, recipientId);
         } else {
-        console.log("Successfully called Send API for recipient %s",
+        logger.debug("Successfully called Send API for recipient %s",
           recipientId);
         }
 
@@ -83,10 +84,10 @@ var retrieveUserProfile = (userId) => {
   return new Promise((resolve,reject) => {
       axios.get(USER_PROFILE_API_URL).then((response) => {
 
-          console.log("Response from user profile api",JSON.stringify(response.data,undefined,2));
+          logger.debug("Response from user profile api",JSON.stringify(response.data,undefined,2));
           resolve(response.data);
       }).catch((e) => {
-          console.log(`Error in calling user profile api`,e);
+          logger.debug(`Error in calling user profile api`,e);
           reject('Error in calling user profile api'); 
       });
       
@@ -107,10 +108,10 @@ var callUserProfileAPI = (userId) =>{
       var messageId = body.message_id;
 
       if (messageId) {
-        console.log("Successfully sent message with id %s to recipient %s",
+        logger.debug("Successfully sent message with id %s to recipient %s",
           messageId, recipientId);
       } else {
-      console.log("Successfully called Send API for recipient %s",
+      logger.debug("Successfully called Send API for recipient %s",
         recipientId);
       }
     } else {
@@ -172,8 +173,8 @@ var sendQuickReply = (recipientId,text,response) => {
  */
 var sendGenericMessage = (recipientId,list) => {
 
-  console.log("sendGenericMessage");
-  console.log("data -> " + JSON.stringify(list,undefined,2));
+  logger.debug("sendGenericMessage");
+  logger.debug("data -> " + JSON.stringify(list,undefined,2));
 
   var messageData = {
     recipient: {
@@ -212,7 +213,7 @@ var sendGenericMessage = (recipientId,list) => {
 
   });
 
-  console.log("facebook compatible data -> " + JSON.stringify(messageData,undefined,2));
+  logger.debug("facebook compatible data -> " + JSON.stringify(messageData,undefined,2));
 
   // {
   //   title: "touch",

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const  logger = require('./winstonlogger')(__filename);
 
 const properties = {
     ORCHESTRA_URL :'http://192.168.98.19:8080/',
@@ -64,20 +65,20 @@ var connectionDetails = (dataType) => {
 
 var makeRequest = (dataType,paramMap,requestType,data) => {
 
-    console.log('Data -> ',JSON.stringify(data,undefined,2));
+    logger.debug('Data -> ',JSON.stringify(data,undefined,2));
 
     //Step 1 - construct url
     var details = connectionDetails(dataType);
 
-    console.log("Details -> " + JSON.stringify(details,undefined,2));
+    logger.debug("Details -> " + JSON.stringify(details,undefined,2));
     
     //Step 2 - replace parameters with values in url
     for (var [key, value] of paramMap.entries()) {
-        console.log(`Key -> ${key}, value -> ${value}`);
+        logger.debug(`Key -> ${key}, value -> ${value}`);
         details.url = details.url.replace('{{'+ key+'}}',value);
     }
 
-    console.log("Details -> " + JSON.stringify(details,undefined,2));
+    logger.debug("Details -> " + JSON.stringify(details,undefined,2));
     
 
     //Step 3 - Create Promise and call the URL
@@ -90,11 +91,11 @@ var makeRequest = (dataType,paramMap,requestType,data) => {
             headers : {'auth-token' : details.userId, 'Referer':properties.API_GATEWAY_URL, 'Authorization': 'Basic ' + properties.CALENDAR_USER}
           }).then((response) => {
 
-            console.log("Response from orchestra",JSON.stringify(response.data,undefined,2));
+            logger.debug("Response from orchestra",JSON.stringify(response.data,undefined,2));
             
             resolve(response.data);
         }).catch((e) => {
-            console.log(`Error in calling orchestra`,e);
+            logger.debug(`Error in calling orchestra`,e);
             reject('Error in calling orchestra'); 
         });
         

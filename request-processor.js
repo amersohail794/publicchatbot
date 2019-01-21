@@ -17,7 +17,8 @@ const
     globalObjectsFactory = require('./global-objects'),
     userStateManager = require('./user-state'),
     responseProcessor = require('./response-processor'),
-    fs = require('fs');
+    fs = require('fs'),
+    logger = require('./winstonlogger')(__filename);
 
     
 
@@ -30,11 +31,12 @@ var process = (params) => {
         let processData = globalObjectsFactory.getProcesDataObj();
         processData.requestParams = params;
 
-        console.log("utterance ",params.utterance)
-        console.log("params " + JSON.stringify(params,undefined,2));
+        logger.debug("utterance ",params.utterance);
+        
+        logger.debug("params " + JSON.stringify(params,undefined,2));
 
         userConversation.getUserConversation(params.userId).then((lastConversation) => {
-            console.log("LastConversation",lastConversation);
+            logger.debug("LastConversation",lastConversation);
 
             if (params.utterance == 'reset'){
                 if (lastConversation != undefined){
@@ -71,7 +73,7 @@ var process = (params) => {
 }
 
 var processQuickReply = (params) => {
-    console.log("processQuickReply");
+    logger.debug("processQuickReply");
     let processData = globalObjectsFactory.getProcesDataObj();
     processData.requestParams = params;
     flow.findFlow(params.quickReply.payload).then(onFlowFound.bind(null,processData));
@@ -86,7 +88,7 @@ var processMessageAttachment = (params) => {
     return new Promise( (resolve,reject) => {
 
         if (params.attachments[0].type === 'location'){
-            console.log("received user location");
+            logger.debug("received user location");
             userConversation.getUserConversation(params.userId).then((lastConversation) => {
                 return flow.findFlow(lastConversation.lastIntent +'.location')
             }).then((intentFlow) => {
@@ -108,9 +110,9 @@ var processPostback = (params) => {
 
 var onLuisRespnose = (processData,response) => {
 
-    console.log(`User intent ${response.intent}`);
-    console.log("userId ", processData.requestParams.userId);
-    console.log("entityMap ",response.entityMap); 
+    logger.debug(`User intent ${response.intent}`);
+    logger.debug("userId ", processData.requestParams.userId);
+    logger.debug("entityMap ",response.entityMap); 
 
     processData.entityMap = response.entityMap;
 
@@ -120,13 +122,13 @@ var onLuisRespnose = (processData,response) => {
 
 //entityMap is list of unique entities against luis utterance
 var onFlowFound = (processData,intentFlow) => {
-    console.log("Intent flow matched",JSON.stringify(intentFlow,undefined,2));
+    logger.debug("Intent flow matched",JSON.stringify(intentFlow,undefined,2));
     processData.intentFlow = intentFlow;
     //retrieving user profile
     facebook.retrieveUserProfile(processData.requestParams.userId).then((profile) => {
         
         let selectedAction = findAppropriateAction(processData.entityMap,intentFlow);
-        console.log("selectedAction ",JSON.stringify(selectedAction,undefined,1));
+        logger.debug("selectedAction ",JSON.stringify(selectedAction,undefined,1));
         if (selectedAction === undefined){
             //lets go for exceptionalFlow
             let exceptionAction = findExceptionAction(processData);
@@ -159,7 +161,7 @@ var findAppropriateAction = function(entityMap,intentFlow){
       }
     });
 
-    console.log("allRequiredEntityTypesFound ",allRequiredEntityTypesFound);
+    logger.debug("allRequiredEntityTypesFound ",allRequiredEntityTypesFound);
     
 
     if (allRequiredEntityTypesFound){ //if all the required entity types found in the luis utterance, then proceed further for entity check 
@@ -173,9 +175,9 @@ var findAppropriateAction = function(entityMap,intentFlow){
       for (let i = 0;  i < a.entity.length; i++){
        
         for (let value of entityMap.values()) {
-          console.log(`Going to match a.entity[${i}] ${a.entity[i]} with value.entity ${value.entity}`);
+          logger.debug(`Going to match a.entity[${i}] ${a.entity[i]} with value.entity ${value.entity}`);
           if (a.entity[i] === value.entity){
-            console.log("entity matched");
+            logger.debug("entity matched");
             entityFound = true;
             break;
           }
@@ -205,7 +207,7 @@ var findExceptionAction = function(entityMap,intentFlow){
 }
 
 var executeAction = async function(processData){
-    console.log("executing action");
+    logger.debug("executing action");
     let index = 1;
 
     let p = Promise.resolve();
@@ -214,11 +216,11 @@ var executeAction = async function(processData){
 
     try{
         for (var i = 0; i < processData.selectedAction.responses.length; i++){
-            let response = row[Math.floor(Math.random() * processData.selectedAction.responses[i].length)]; //selecting random response
-            console.log("Selected Resposne " + JSON.stringify(response,undefined,2));
+            let response = processData.selectedAction.responses[i][Math.floor(Math.random() * processData.selectedAction.responses[i].length)]; //selecting random response
+            logger.debug("Selected Resposne " + JSON.stringify(response,undefined,2));
             processData.actionCurrentResponse = response;
             if (processData.actionCurrentResponse.responseType === 'Internal'){
-                console.log("ResponseType ",processData.actionCurrentResponse.responseType);
+                logger.debug("ResponseType ",processData.actionCurrentResponse.responseType);
                 
                 let p = {
                   userId : processData.requestParams.userId,
@@ -236,7 +238,7 @@ var executeAction = async function(processData){
             }
         }
     }catch(error){
-        console.log("Error in processing responses " + error);
+        logger.debug("Error in processing responses " + error);
 
     }
 
@@ -250,11 +252,11 @@ var executeAction = async function(processData){
     //             setTimeout(() => {
                     
     //                 let response = row[Math.floor(Math.random() * row.length)]; //selecting random response
-    //                 console.log("Selected Resposne " + JSON.stringify(response,undefined,2));
+    //                 logger.debug("Selected Resposne " + JSON.stringify(response,undefined,2));
     //                 processData.actionCurrentResponse = response;
 
     //                 if (processData.actionCurrentResponse.responseType === 'Internal'){
-    //                     console.log("ResponseType ",processData.actionCurrentResponse.responseType);
+    //                     logger.debug("ResponseType ",processData.actionCurrentResponse.responseType);
                         
     //                     let p = {
     //                       userId : processData.requestParams.userId,
@@ -282,7 +284,7 @@ var executeAction = async function(processData){
             
     //         })
     //     );
-    //     // console.log("I am done");
+    //     // logger.debug("I am done");
     // });
   
 

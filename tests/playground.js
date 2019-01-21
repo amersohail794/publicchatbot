@@ -1,8 +1,10 @@
+const logger = require('../winstonlogger')(__filename);
+
 var array = [1000,22000,3000,5,1,2,3,4];
 
 // for (let i = 0, p = Promise.resolve(); i < array.length; i++) {
 //     p = p.then((output) => new Promise(resolve =>{
-//         console.log(output);
+//         logger.debug(output);
 //         processNumber(array[i],resolve)
 //     }
 //     ));
@@ -11,11 +13,11 @@ var array = [1000,22000,3000,5,1,2,3,4];
 let p = Promise.resolve();
 array.forEach((number) =>{
     p = p.then(() => new Promise(resolve =>{
-        console.log(number);
+        logger.debug(number);
         processNumber(number,resolve)
     }
     ));
-    console.log("I am done");
+    logger.debug("I am done");
 });
 
 
@@ -28,7 +30,7 @@ array.forEach((number) =>{
 
 //     array.forEach((number) => {
 //         await processNumber(number).then((output) => {
-//             console.log(output);
+//             logger.debug(output);
 //         });
 //     });
 
@@ -47,7 +49,7 @@ function processNumber(number,resolve){
 //     return previous + current;
 // });
 
-// console.log(output);
+// logger.debug(output);
 
 
 // array.reduce((p,current) => {
@@ -55,7 +57,7 @@ function processNumber(number,resolve){
 
     
 //         p.then(() => {
-//             // console.log("I am inside");
+//             // logger.debug("I am inside");
 //             return new Promise((resolve,reject) => {
 //                 //actual execution;
 //                 let j = 1;
@@ -70,7 +72,7 @@ function processNumber(number,resolve){
 //                 for (let i = 1; i <= current;i++){
 //                     j = j * i;
 //                 }
-//                 console.log("finished executing 2 ",current);
+//                 logger.debug("finished executing 2 ",current);
 //                 resolve();
 //             });
 //         })
@@ -87,7 +89,7 @@ function processNumber(number,resolve){
 //     let result = await promise; //this line will be on hold untile promise is resolved
 
 
-//     console.log(result);
+//     logger.debug(result);
 // }
 
 // function fWithThen(){
@@ -96,10 +98,10 @@ function processNumber(number,resolve){
 //     });
 
 //     promise.then((result) => {
-//         console.log(result);
+//         logger.debug(result);
 //     }); 
     
-//     console.log("I am finished");
+//     logger.debug("I am finished");
     
 // }
 

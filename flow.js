@@ -1,4 +1,5 @@
-const fs = require('fs');
+const fs = require('fs'),
+logger = require('./winstonlogger')(__filename);
 
 var fetchAllFlows = () => {
   try {
@@ -10,7 +11,7 @@ var fetchAllFlows = () => {
 };
 
 var findFlow = (intent) =>{
-    console.log("Finding intent ",intent);
+    logger.debug("Finding intent ",intent);
     return new Promise((resolve,reject) =>{
         var flow = fetchAllFlows();
         var intentFlow;
@@ -24,7 +25,7 @@ var findFlow = (intent) =>{
                 
             // }
         })
-        console.log("found flow ",intentFlow);
+        logger.debug("found flow ",intentFlow);
         resolve(intentFlow);
     });
 

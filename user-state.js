@@ -1,7 +1,8 @@
 const
     userConversation = require('./user-conversation'),
     orchestra = require('./orchestra'),
-    serviceMappings = require('./service-mapping.js');
+    serviceMappings = require('./service-mapping.js'),
+    logger = require('./winstonlogger')(__filename);
 
 const allServiceMappings = serviceMappings.loadAllMappings();
 
@@ -17,7 +18,7 @@ var collectUserState =  ((processData) => {
       // if (intentFlow.intentImportance != undefined){
         switch(processData.actionCurrentResponse.responseType){
           case 'ServiceSelection':{
-            console.log('intentFlow importance -> Service Selection');
+            logger.debug('intentFlow importance -> Service Selection');
             for (var i = 0; i < allServiceMappings.length; i++){
               if (allServiceMappings[i].utterance === processData.actionCurrentResponse.text){
                 attributes.set('selectedService',allServiceMappings[i].orchestraName);
@@ -26,13 +27,13 @@ var collectUserState =  ((processData) => {
                 break;
               }
             }
-            console.log("collectingUserState -> ServiceSelection");
+            logger.debug("collectingUserState -> ServiceSelection");
             userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
             resolve(true);
             break;
           }
           case 'BranchSelection':{
-            console.log('intentFlow importance -> Branch Selection');
+            logger.debug('intentFlow importance -> Branch Selection');
             let payloadTokens = processData.requestParams.postback.payload.split('.');
             attributes.set('selectedBranchInternalId',payloadTokens[payloadTokens.length-1]);
             //retrieving branch public id
@@ -44,22 +45,22 @@ var collectUserState =  ((processData) => {
               attributes.set('selectedBranchCity',branchDetail.branch.addressCity);
               attributes.set('selectedBranchCountry',branchDetail.branch.addressCountry);
              
-              console.log("collectinguserState -> BranchSelection");
+              logger.debug("collectinguserState -> BranchSelection");
               userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
               resolve(true);
               // resolve(true);
             }).catch((error) => {
               resolve(false);
-              console.log("Error -> " + JSON.stringify(error,undefined,2));
+              logger.debug("Error -> " + JSON.stringify(error,undefined,2));
             
             });
             
             break;
           }
           case 'DateTimeSelection':{
-            console.log('intentFlow importance -> Appointment DateTime Selection');
+            logger.debug('intentFlow importance -> Appointment DateTime Selection');
             let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
-            console.log("entity -> " + JSON.stringify(ent,undefined,2));
+            logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
             let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
             // let dateTime = entityMap.get("runtime.datetime.value");
             if (dateTime !== undefined){
@@ -78,7 +79,7 @@ var collectUserState =  ((processData) => {
   
             switch(processData.actionCurrentResponse.processingFunction){
               case 'ConfirmAppointment':{
-                console.log('intentFlow importance -> Appointment Confirmation');
+                logger.debug('intentFlow importance -> Appointment Confirmation');
                 if (processData.responseExecutionOutput !== undefined && processData.responseExecutionOutput.publicId !== undefined){
                   attributes.set("appointmentConfirmationPublicId",processData.responseExecutionOutput.publicId);
                   attributes.set("status","APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST");
@@ -91,13 +92,13 @@ var collectUserState =  ((processData) => {
               }
               case 'SearchCustomerFromOrchestra':{
                 if (processData.responseExecutionOutput != undefined){
-                    console.log("Setting customer public id to attributes");
+                    logger.debug("Setting customer public id to attributes");
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
               }
               case 'CreateCustomerIfNeeded':{
                 if (processData.responseExecutionOutput != undefined){
-                    console.log("Setting customer public id to attributes");
+                    logger.debug("Setting customer public id to attributes");
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
               }

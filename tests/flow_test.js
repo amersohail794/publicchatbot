@@ -1,13 +1,14 @@
-const flow = require('../flow');
+const flow = require('../flow'),
+logger = require('../winstonlogger')(__filename);
 
 var fullIntentFlow = flow.fetchAllFlows();
-console.log("Type:",typeof fullIntentFlow);
-console.log("IntentFlow Loaded",JSON.stringify(fullIntentFlow,undefined,2));
+logger.debug("Type:",typeof fullIntentFlow);
+logger.debug("IntentFlow Loaded",JSON.stringify(fullIntentFlow,undefined,2));
 
 flow.findFlow('Greeting').then((intentFlow) => {
-    console.log("intentFlow Found",JSON.stringify(intentFlow,undefined,2));
+    logger.debug("intentFlow Found",JSON.stringify(intentFlow,undefined,2));
 });
 
 flow.findFlow('RenewVisa').then((intentFlow) => {
-    console.log("intentFlow Found",JSON.stringify(intentFlow,undefined,2));
+    logger.debug("intentFlow Found",JSON.stringify(intentFlow,undefined,2));
 });

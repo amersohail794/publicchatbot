@@ -22,7 +22,8 @@ const
   luis = require('./luis'),
   facebook = require('./facebook'),
   globalObjectsFactory = require('./global-objects'),
-  requestProcessor = require('./request-processor');
+  requestProcessor = require('./request-processor'),
+  logger = require('./winstonlogger')(__filename);
 
 
 
@@ -75,7 +76,7 @@ const LUIS_URL = 'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/a056
 app.get('/webhook', function(req, res) {
   if (req.query['hub.mode'] === 'subscribe' &&
       req.query['hub.verify_token'] === VALIDATION_TOKEN) {
-    console.log("Validating webhook");
+    logger.debug("Validating webhook");
     res.status(200).send(req.query['hub.challenge']);
   } else {
     console.error("Failed validation. Make sure the validation tokens match.");
@@ -117,7 +118,7 @@ app.post('/webhook', function (req, res) {
         } else if (messagingEvent.account_linking) {
           receivedAccountLink(messagingEvent);
         } else {
-          console.log("Webhook received unknown messagingEvent: ", messagingEvent);
+          logger.debug("Webhook received unknown messagingEvent: ", messagingEvent);
         }
       });
     });
@@ -203,7 +204,7 @@ function receivedAuthentication(event) {
   // plugin.
   var passThroughParam = event.optin.ref;
 
-  console.log("Received authentication for user %d and page %d with pass " +
+  logger.debug("Received authentication for user %d and page %d with pass " +
     "through param '%s' at %d", senderID, recipientID, passThroughParam,
     timeOfAuth);
 
@@ -232,9 +233,9 @@ function receivedMessage(event) {
   var timeOfMessage = event.timestamp;
   var message = event.message;
 
-  console.log("Received message for user %d and page %d at %d with message:",
+  logger.debug("Received message for user %d and page %d at %d with message:",
     senderID, recipientID, timeOfMessage);
-  console.log(JSON.stringify(message));
+  logger.debug(JSON.stringify(message));
 
   var isEcho = message.is_echo;
   var messageId = message.mid;
@@ -259,19 +260,19 @@ function receivedMessage(event) {
     params.messageId = messageId;
   
 
-  console.log("Params: -> " + JSON.stringify(params,undefined,2));
-  console.log(`Message: ${messageText}`);
+  logger.debug("Params: -> " + JSON.stringify(params,undefined,2));
+  logger.debug(`Message: ${messageText}`);
 
 try{
 
   if (isEcho) {
     // Just logging message echoes to console
-    console.log("Received echo for message %s and app %d with metadata %s",
+    logger.debug("Received echo for message %s and app %d with metadata %s",
       messageId, appId, metadata);
     return;
   } else if (quickReply) {
     var quickReplyPayload = quickReply.payload;
-    console.log("Quick reply for message %s with payload %s",
+    logger.debug("Quick reply for message %s with payload %s",
       messageId, quickReplyPayload);
 
     //sendTextMessage(senderID, "Quick reply tapped");
@@ -295,7 +296,7 @@ try{
   }
   
 }catch(e){
-  console.log("Error",e);
+  logger.debug("Error",e);
   sendTextMessage(senderID,"Error -> "+e.message);
 }
 
@@ -389,12 +390,12 @@ function receivedDeliveryConfirmation(event) {
 
   if (messageIDs) {
     messageIDs.forEach(function(messageID) {
-      console.log("Received delivery confirmation for message ID: %s",
+      logger.debug("Received delivery confirmation for message ID: %s",
         messageID);
     });
   }
 
-  console.log("All message before %d were delivered.", watermark);
+  logger.debug("All message before %d were delivered.", watermark);
 }
 
 
@@ -411,7 +412,7 @@ function receivedPostback(event) {
   var recipientID = event.recipient.id;
   var timeOfPostback = event.timestamp;
  
-  console.log(`Postback Event `, JSON.stringify(event,undefined,2));
+  logger.debug(`Postback Event `, JSON.stringify(event,undefined,2));
  
   // The 'payload' param is a developer-defined field which is set in a postback
   // button for Structured Messages.
@@ -427,12 +428,12 @@ function receivedPostback(event) {
   
 
   if (event.postback.referral != undefined){
-	  console.log("Referernce ",event.postback.referral.ref);
+	  logger.debug("Referernce ",event.postback.referral.ref);
   }
   else{
 
     if (payload == undefined){
-      console.log("New Customer");
+      logger.debug("New Customer");
       //greet user
       requestProcessor.process({utterance:'Hi',userId: senderID});
     }
@@ -445,7 +446,7 @@ function receivedPostback(event) {
   }
 	  
 
-  console.log("Received postback for user %d and page %d with payload '%s' " +
+  logger.debug("Received postback for user %d and page %d with payload '%s' " +
     "at %d", senderID, recipientID, payload, timeOfPostback);
 
   // When a postback is called, we'll send a message back to the sender to
@@ -470,7 +471,7 @@ function receivedMessageRead(event) {
   var watermark = event.read.watermark;
   var sequenceNumber = event.read.seq;
 
-  console.log("Received message read event for watermark %d and sequence " +
+  logger.debug("Received message read event for watermark %d and sequence " +
     "number %d", watermark, sequenceNumber);
 }
 
@@ -489,7 +490,7 @@ function receivedAccountLink(event) {
   var status = event.account_linking.status;
   var authCode = event.account_linking.authorization_code;
 
-  console.log("Received account link event with for user %d with status %s " +
+  logger.debug("Received account link event with for user %d with status %s " +
     "and auth code %s ", senderID, status, authCode);
 }
 
@@ -895,7 +896,7 @@ function sendQuickReply(recipientId) {
  *
  */
 function sendReadReceipt(recipientId) {
-  console.log("Sending a read receipt to mark message as seen");
+  logger.debug("Sending a read receipt to mark message as seen");
 
   var messageData = {
     recipient: {
@@ -912,7 +913,7 @@ function sendReadReceipt(recipientId) {
  *
  */
 function sendTypingOn(recipientId) {
-  console.log("Turning typing indicator on");
+  logger.debug("Turning typing indicator on");
 
   var messageData = {
     recipient: {
@@ -929,7 +930,7 @@ function sendTypingOn(recipientId) {
  *
  */
 function sendTypingOff(recipientId) {
-  console.log("Turning typing indicator off");
+  logger.debug("Turning typing indicator off");
 
   var messageData = {
     recipient: {
@@ -986,10 +987,10 @@ function callSendAPI(messageData) {
       var messageId = body.message_id;
 
       if (messageId) {
-        console.log("Successfully sent message with id %s to recipient %s",
+        logger.debug("Successfully sent message with id %s to recipient %s",
           messageId, recipientId);
       } else {
-      console.log("Successfully called Send API for recipient %s",
+      logger.debug("Successfully called Send API for recipient %s",
         recipientId);
       }
     } else {
@@ -1002,7 +1003,7 @@ function callSendAPI(messageData) {
 // Webhooks must be available via SSL with a certificate signed by a valid
 // certificate authority.
 app.listen(app.get('port'), function() {
-  console.log('Node app is running on port', app.get('port'));
+  logger.debug('Node app is running on port', app.get('port'));
 });
 
 module.exports = app;

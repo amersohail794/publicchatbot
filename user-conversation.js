@@ -1,7 +1,9 @@
 const fs = require('fs');
 const moment = require('moment');
+const  logger = require('./winstonlogger')(__filename);
 
 const fileName = 'conversations.json';
+
 
 var fetchAllConversations = () => {
 
@@ -10,7 +12,7 @@ var fetchAllConversations = () => {
       var conversations = fs.readFileSync(fileName);
       resolve(JSON.parse(conversations));
     } catch (e) {
-      console.log(e);
+      logger.debug(e);
       resolve([]);
     }
   });
@@ -25,7 +27,7 @@ var getUserConversation = (userId) => {
  
     fetchAllConversations().then((conversations) => {
       let existingConversations = conversations.filter((conversation) => conversation.userId === userId);
-      console.log("ExistingConversations",existingConversations.length);
+      logger.debug("ExistingConversations",existingConversations.length);
       resolve(existingConversations.length > 0 ? existingConversations[0] : undefined);
 
     })
@@ -37,7 +39,7 @@ var getUserConversation = (userId) => {
 };
 
 var getNextStep = ((userId) => {
-  console.log("Getting Next Step for User -> ",userId);
+  logger.debug("Getting Next Step for User -> ",userId);
   return new Promise((resolve) => {
     fetchAllConversations().then((conversations) => {
       let existingConversations = conversations.filter((conversation) => conversation.userId === userId);
@@ -62,7 +64,7 @@ var getNextStep = ((userId) => {
 });
 
 var moveActiveUsecaseToInprocess = ((userId) => {
-  console.log("moving active use case to in process -> ",userId); //also move pending use cases to pending use case list
+  logger.debug("moving active use case to in process -> ",userId); //also move pending use cases to pending use case list
 
   return new Promise((resolve) => {
     fetchAllConversations().then((conversations) => {
@@ -72,12 +74,12 @@ var moveActiveUsecaseToInprocess = ((userId) => {
       if (existingConversations.length > 0){
         userConversation = existingConversations[0];
         if (userConversation.inProcessUsecases === undefined){
-          console.log("there is no inprocess use cases");
+          logger.debug("there is no inprocess use cases");
           userConversation.inProcessUsecases = [];
         }
 
         if (userConversation.activeUsecase != undefined){
-          console.log("activeUsecase is going to push to inprocess use cases");
+          logger.debug("activeUsecase is going to push to inprocess use cases");
           userConversation.inProcessUsecases.push(userConversation.activeUsecase);
           userConversation.activeUsecase = null;
         }
@@ -98,9 +100,9 @@ var saveUserConversation = ((userId,intentFlow,attributesMap) => {
   return new Promise((resolve,reject) => {
     fetchAllConversations().then((conversations) => {
       //Step 1 - Fetch User Conversation otherwise create one
-      console.log("Total conversations",conversations.length);
+      logger.debug("Total conversations",conversations.length);
       let existingConversations = conversations.filter((conversation) => conversation.userId === userId);
-      console.log("Existing Conversations ",existingConversations.length);
+      logger.debug("Existing Conversations ",existingConversations.length);
       let userConversation = null;
       if (existingConversations.length === 0){
         userConversation = {userId : userId, lastIntent : intentFlow.intent, lastIntentDateTime: moment().format()};
@@ -195,7 +197,7 @@ var saveUserConversation = ((userId,intentFlow,attributesMap) => {
       if (activeUsecaseFound && attributesMap !== undefined){
         
         for (let [attributeKey, attributeValue] of attributesMap.entries()) {
-            console.log("Setting user attributes -> " + attributeKey + "  -> " + attributeValue);
+            logger.debug("Setting user attributes -> " + attributeKey + "  -> " + attributeValue);
           userConversation.activeUsecase.attributes[attributeKey] = attributeValue;
         }
       }

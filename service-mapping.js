@@ -1,4 +1,5 @@
 const fs = require('fs');
+const  logger = require('./winstonlogger')(__filename);
 
 
 const fileName = 'service_mapping.json';

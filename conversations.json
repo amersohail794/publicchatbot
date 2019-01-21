@@ -1,26 +1,7 @@
 [
   {
     "userId": "1697938176985929",
-    "lastIntent": "RenewVisaMedicalTest.BranchSelection",
-    "lastIntentDateTime": "2019-01-20T16:40:04+04:00",
-    "activeUsecase": {
-      "attributes": {
-        "selectedService": "Medical Test For Visa",
-        "selectedServicePublicId": "cd94eaaeb0cf39c5f85e2c9f4ff59714d1af85554e66e96612ba49f288974f3e",
-        "selectedServiceInternalId": "8"
-      },
-      "name": "RenewVisaMedicalTest",
-      "pendingSteps": [
-        "DateTimeSelection",
-        "AppointmentConfirmation"
-      ],
-      "followingUsecase": [
-        "RenewvisaAppSubmission"
-      ],
-      "completedSteps": [
-        "ServiceSelection"
-      ],
-      "currentStep": "BranchSelection"
-    }
+    "lastIntent": "NewCustomer",
+    "lastIntentDateTime": "2019-01-21T12:03:44+04:00"
   }
 ]
