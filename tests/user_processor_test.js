@@ -2,19 +2,19 @@ const requestProcessor = require('../request-processor');
 const app = require('../app');
 const logger = require('../winstonlogger')(__filename);
 
-var params = {
-    utterance : 'Hi',
-    userId : '1697938176985929'
-}
-
-requestProcessor.process(params);
-
 // var params = {
-//     utterance : 'I want to renew my family visa',
+//     utterance : 'Hi',
 //     userId : '1697938176985929'
 // }
 
 // requestProcessor.process(params);
+
+var params = {
+    utterance : 'I want to renew my family visa',
+    userId : '1697938176985929'
+}
+
+requestProcessor.process(params);
 
 // var params = {
 //     userId: "1697938176985929",

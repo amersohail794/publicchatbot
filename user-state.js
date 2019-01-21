@@ -88,30 +88,36 @@ var collectUserState =  ((processData) => {
                   attributes.set("appointmentqpId",processData.actionCurrentResponse.appointment.qpId);
                   attributes.set("appointmentId",processData.actionCurrentResponse.appointment.id);
                 }
-               
+                break;
               }
               case 'SearchCustomerFromOrchestra':{
                 if (processData.responseExecutionOutput != undefined){
                     logger.debug("Setting customer public id to attributes");
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
+                break;
               }
               case 'CreateCustomerIfNeeded':{
                 if (processData.responseExecutionOutput != undefined){
                     logger.debug("Setting customer public id to attributes");
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
+                break;
               }
               
             }
             
           
-            userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
-            resolve(true);
+            userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes).then(()=>{
+                resolve(true);
+            });
+            
             break;
           }
           default:{
-            userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
+            userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes).then(() => {
+                resolve(true);
+            });
           }
            
           

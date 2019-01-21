@@ -219,6 +219,7 @@ var executeAction = async function(processData){
             let response = processData.selectedAction.responses[i][Math.floor(Math.random() * processData.selectedAction.responses[i].length)]; //selecting random response
             logger.debug("Selected Resposne " + JSON.stringify(response,undefined,2));
             processData.actionCurrentResponse = response;
+            
             if (processData.actionCurrentResponse.responseType === 'Internal'){
                 logger.debug("ResponseType ",processData.actionCurrentResponse.responseType);
                 
@@ -233,7 +234,9 @@ var executeAction = async function(processData){
             }else{
                 let responseResult = await responseProcessor.process(processData)
                 processData.responseExecutionOutput = responseResult;
+                logger.debug("I am before waiting");
                 await userStateManager.collectUserState(processData);
+                logger.debug("I am waiting");
                      
             }
         }
