@@ -114,7 +114,7 @@ var processingTextResponse = ((processData) => {
   
   var process = ((processData) => {
     logger.debug("Response Selected",JSON.stringify(processData.actionCurrentResponse,undefined,2));
-    return new Promise((resolve) => {
+    return new Promise((resolve,reject) => {
       if (processData.actionCurrentResponse.responseType === 'Text'){
         logger.debug("ResponseType ",processData.actionCurrentResponse.responseType);
         processingTextResponse(processData)

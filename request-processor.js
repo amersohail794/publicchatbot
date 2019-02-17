@@ -202,8 +202,46 @@ var findAppropriateAction = function(entityMap,intentFlow){
 
 };
 
-var findExceptionAction = function(entityMap,intentFlow){
+var findExceptionAction = async function(processData,exception){
+    try{
+        for (var i = 0; i < processData.selectedAction.exceptions.length; i++){
 
+            if (processData.selectedAction.exceptions[i].exceptionType == exception){
+                for (var j = 0; j < processData.selectedAction.exceptions[i].responses.length; j++){
+                    let response = processData.selectedAction.exceptions[i].responses[j][Math.floor(Math.random() * processData.selectedAction.exceptions[i].responses[j].length)]; //selecting random response
+                    logger.debug("Selected exception Response " + JSON.stringify(response,undefined,2));
+                    processData.actionCurrentResponse = response;
+
+                    if (processData.actionCurrentResponse.responseType === 'Internal'){
+                        logger.debug("ResponseType ",processData.actionCurrentResponse.responseType);
+                        
+                        let p = {
+                          userId : processData.requestParams.userId,
+                          utterance : processData.actionCurrentResponse.responseType + '.' + processData.actionCurrentResponse.text
+                        }
+                        
+                        await process(p);
+                        break;
+            
+                    }else{
+                        let responseResult = await responseProcessor.process(processData)
+                        processData.responseExecutionOutput = responseResult;
+                        logger.debug("I am before waiting");
+                        await userStateManager.collectUserState(processData);
+                        logger.debug("I am waiting");
+                             
+                    }    
+
+
+                }
+            }
+
+        }
+    }catch(error){
+        logger.debug("Error in processing responses " + error);
+        await findExceptionAction(processData,error);
+
+    }
 }
 
 var executeAction = async function(processData){
@@ -242,6 +280,7 @@ var executeAction = async function(processData){
         }
     }catch(error){
         logger.debug("Error in processing responses " + error);
+        await findExceptionAction(processData,error);
 
     }
 

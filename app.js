@@ -132,6 +132,22 @@ app.post('/webhook', function (req, res) {
 });
 
 /*
+ * All callbacks for Messenger are POST-ed. They will be sent to the same
+ * webhook. Be sure to subscribe your app to your page to receive callbacks
+ * for your page.
+ * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
+ *
+ */
+app.post('/orchestraevent', function (req, res) {
+    var data = req.body;
+    logger.debug("Post request on orchestraevent recieved ",JSON.stringify(data,null,2));
+
+    res.sendStatus(200);
+
+    
+  });
+
+/*
  * This path is used for account linking. The account linking call-to-action
  * (sendAccountLinking) is pointed to this URL.
  *
