@@ -79,14 +79,18 @@ var process = (params) => {
 
 var utteranceFormatter = (utterance,lastConversation) => {
     if (utterance != null 
-        && parseInt(utterance) != "NaN"
+        && parseInt(utterance) != NaN
+        && lastConversation != null
         && lastConversation.activeUsecase != null
         && lastConversation.activeUsecase.attributes != null
-        && lastConversation.activeUsecase.currentStep == "DateTimeSelection" && lastConversation.activeUsecase.attributes.selectedDate != undefined){
+        && lastConversation.activeUsecase.currentStep == "DateTimeSelection" 
+        && lastConversation.activeUsecase.attributes.selectedDate != undefined){
         
         return utterance + ":00";
         
     }
+    return utterance;
+    
 }
 
 var processQuickReply = (params) => {
