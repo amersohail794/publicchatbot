@@ -6,6 +6,7 @@ const
     Nightmare = require ('nightmare'),
     moment = require('moment-timezone'),
     qrcode = require('qrcode'),
+    util = require('./util'),
     logger = require('./winstonlogger')(__filename);
 
 var processingApiGatewayJsonResponse =  ( (processData) => {
@@ -64,12 +65,20 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
           let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
           logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
           let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
+
+         
+           
+            if (ent.resolution.values.length > 1 && !util.isTimeInRange( util.separateDateTime(entityValue)[1],processData.selectedAction.timeFilter)){
+                entityValue = ent.resolution.values[0].value;
+            }
+
+
           logger.debug("Entity Value -> " + entityValue);
-          let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
+          let valueParts = util.separateDateTime(entityValue); //2017-05-02 08:00:00
           let date = valueParts[0]; //2017-05-02
           let time = valueParts[1]; //08:00:00
-          let timeParts = time.split(':');
-          let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
+          
+          let timeFormat = util.timeInhhmm(time);
           logger.debug("TimeFormatted -> " + timeFormat);
           userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
             return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: date})),'get');  
@@ -97,6 +106,158 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
             
             
           }).catch((error) => {
+            logger.debug("Error -> " + JSON.stringify(error,undefined,2));
+            facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving timeslots");
+            reject("Error -> " + JSON.stringify(error,undefined,2));
+          });
+        }) //end of promise
+    }
+    else if (processData.actionCurrentResponse.processingFunction === 'CheckDatesAvailability'){
+        logger.debug("Checking dates Availability");
+  
+        return new Promise((resolve,reject) => {
+  
+          let ent = processData.entityMap.get('builtin.datetimeV2.date');
+          logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+          let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
+          logger.debug("Entity Value -> " + entityValue);
+          let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
+          let date = valueParts[0]; //2017-05-02
+         
+          userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
+            return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: date})),'get');  
+          }).then((availableTimes) => {
+            
+            let slotFound = availableTimes.times.length > 0 ? true : false;
+            
+            if (slotFound){
+              
+              resolve(true);
+            }
+            else{
+                reject("SlotNotAvailable");
+            }
+            
+            
+            
+          }).catch((error) => {
+            logger.debug("Error -> " + JSON.stringify(error,undefined,2));
+            facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving timeslots");
+            reject("Error -> " + JSON.stringify(error,undefined,2));
+          });
+        }) //end of promise
+    }
+    else if (processData.actionCurrentResponse.processingFunction === 'CheckTimeAvailability'){
+        logger.debug("Checking time Availability");
+  
+        return new Promise((resolve,reject) => {
+  
+          let ent = processData.entityMap.get('builtin.datetimeV2.time');
+          logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+          let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
+
+          if (ent.resolution.values.length > 1 && !util.isTimeInRange(entityValue,processData.selectedAction.timeFilter)){
+            entityValue = ent.resolution.values[0].value;
+            } 
+        
+          logger.debug("Entity Value -> " + entityValue);
+          let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
+         // let date = valueParts[0]; //2017-05-02
+          let time = valueParts[0]; //08:00:00
+          let timeParts = time.split(':');
+          let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
+          logger.debug("TimeFormatted -> " + timeFormat);
+          userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
+            return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: lastConversation.activeUsecase.attributes.selectedDate})),'get');  
+          }).then((availableTimes) => {
+            
+            let slotFound = false;
+            availableTimes.times.forEach((t) => {
+              if (t === timeFormat){
+                logger.debug("slot found");
+                slotFound = true;
+              }
+                
+              
+            });
+            if (slotFound){
+              logger.debug("Setting runtime.datetime.value -> " + entityValue);
+              
+              processData.entityMap.set('runtime.datetime.value',entityValue);
+              resolve(true);
+            }
+            else{
+                reject("SlotNotAvailable");
+            }
+            
+            
+            
+          }).catch((error) => {
+            logger.debug("Error -> " + JSON.stringify(error,undefined,2));
+            facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving timeslots");
+            reject("Error -> " + JSON.stringify(error,undefined,2));
+          });
+        }) //end of promise
+    }
+    else if (processData.actionCurrentResponse.processingFunction === 'FindEmptySlots'){
+        logger.debug("Finding Empty slots");
+  
+        return new Promise((resolve,reject) => {
+  
+        //   let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
+        //   logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+        //   let entityValue = ent.resolution.values[ent.resolution.values.length - 1].value;
+        //   logger.debug("Entity Value -> " + entityValue);
+        //   let valueParts = entityValue.split(' '); //2017-05-02 08:00:00
+        //   let date = lastConversation.activeUsecase.attributes.selectedDate;//valueParts[0]; //2017-05-02
+           let time = null;//lastConversation.activeUsecase.attributes.selectedTime;//valueParts[1]; //08:00:00
+        //   let timeParts = time.split(':');
+        //   let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
+        //   let timeInSeconds = timeParts[0] * 60 + timeParts[1];
+        //   logger.debug("TimeFormatted -> " + timeFormat);
+          userConversation.getUserConversation(processData.requestParams.userId).then((lastConversation) => {
+            time = lastConversation.activeUsecase.attributes.selectedTime;
+            return orchestra.makeRequest('AVAILABLE_TIMES',new Map(Object.entries({SERVICE_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedServicePublicId,BRANCH_PUBLIC_ID:lastConversation.activeUsecase.attributes.selectedBranchPublicId,DATE: lastConversation.activeUsecase.attributes.selectedDate})),'get');  
+          }).then((availableTimes) => {
+            
+            
+            let timeParts = time.split(':');
+            let timeFormat = timeParts[0] + ':'+timeParts[1]; //08:00
+            let timeInSeconds = timeParts[0] * 60 + timeParts[1];
+          logger.debug("TimeFormatted -> " + timeFormat);
+           
+            let availableTimesRanking = [];
+
+            availableTimes.times.forEach((t) => {
+                let parts = t.split(':');
+                let seconds = parts[0] * 60 + parts[1];
+                
+                availableTimesRanking.push({time : t, slotScore : Math.abs(timeInSeconds - seconds)});
+                availableTimesRanking.sort((slot1,slot2) => slot1.slotScore - slot2.slotScore);
+            });
+            
+            let timesOptions = {options : []};
+            
+            let limit = availableTimesRanking.length > 2 ? 2 : availableTimesRanking.length;
+            for (let i = 0; i < limit; i++){
+                let option = {
+                    content_type : 'text',
+                    title : availableTimesRanking[i].time,
+                    payload : 'RenewVisaMedicalTest.SelectedTime.'+availableTimesRanking[i].time
+                }
+                timesOptions.options.push(option);
+            }
+
+            
+            if (timesOptions.options.length > 0)
+
+                return facebook.sendQuickReply(processData.requestParams.userId,"Below are the available time slots nearest to requested time",timesOptions);
+            else
+                reject("NoSlot");
+            
+            
+            }).then(_ =>  resolve(true)) //acknowledged from facebook  
+            .catch((error) => {
             logger.debug("Error -> " + JSON.stringify(error,undefined,2));
             facebook.sendTextMessage(processData.requestParams.userId,"There is problem in retrieving timeslots");
             reject("Error -> " + JSON.stringify(error,undefined,2));

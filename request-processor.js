@@ -33,9 +33,14 @@ var process = (params) => {
 
         logger.debug("utterance ",params.utterance);
         
+        
+
         logger.debug("params " + JSON.stringify(params,undefined,2));
 
         userConversation.getUserConversation(params.userId).then((lastConversation) => {
+
+            params.utterance = utteranceFormatter(params.utterance,lastConversation);
+
             logger.debug("LastConversation",lastConversation);
 
             if (params.utterance == 'reset'){
@@ -70,6 +75,18 @@ var process = (params) => {
 
     });
 
+}
+
+var utteranceFormatter = (utterance,lastConversation) => {
+    if (utterance != null 
+        && parseInt(utterance) != "NaN"
+        && lastConversation.activeUsecase != null
+        && lastConversation.activeUsecase.attributes != null
+        && lastConversation.activeUsecase.currentStep == "DateTimeSelection" && lastConversation.activeUsecase.attributes.selectedDate != undefined){
+        
+        return utterance + ":00";
+        
+    }
 }
 
 var processQuickReply = (params) => {

@@ -39,6 +39,11 @@ var connectionDetails = (dataType) => {
             userId = properties.CALENDAR_USER_ID;
             break;
         }
+        case 'AVAILABLE_DATES':{
+            url = properties.ORCHESTRA_URL + properties.DATES;
+            userId = properties.CALENDAR_USER_ID;
+            break;
+        }
         case 'CONFIRM_APPOINTMENT':{
             url = properties.ORCHESTRA_URL + properties.APPOINTMENT_BOOKING;
             userId = properties.CALENDAR_USER_ID;

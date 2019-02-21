@@ -145,7 +145,7 @@ var processingTextResponse = ((processData) => {
     //     }
     //     process(p).then(_ => resolve());
     //   }
-      else if (['ServiceSelection','BranchSelection','DateTimeSelection','AppointmentConfirmation'].includes(processData.actionCurrentResponse.responseType)){
+      else if (['ServiceSelection','BranchSelection','DateTimeSelection','DateSelection','TimeSelection','AppointmentConfirmation'].includes(processData.actionCurrentResponse.responseType)){
         logger.debug(`no need to do anything for ${processData.actionCurrentResponse.responseType} as it will be handled by CollectingUserState`)
         //no need to do anything as it will be handled by CollectingUserState
         resolve();

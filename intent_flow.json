@@ -288,8 +288,9 @@
         "intent":"AppointmentDateTime",
         "stepName":"DateTimeSelection",
         "actions":[
-            {
+           { 
                 "entityTypesRequired":["builtin.datetimeV2.datetime"],
+                "timeFilter" : "07:30-18:00",
                 "responses":[
                         [{
                             "responseType":"DateTimeSelection"
@@ -314,11 +315,11 @@
                         "exceptionType":"SlotNotAvailable",
                         "responses":[
                             [{
-                                "responesType":"Text",
+                                "responseType":"Text",
                                 "text":"Unfortunately we didn't find any slot for {{UserSession.selectedTime}}"
                             }],
                             [{
-                                "responesType":"Text",
+                                "responseType":"Text",
                                 "text":"We are trying to find empty slots closest to your time. Please wait..."
                             }],
                             [{
@@ -327,9 +328,155 @@
                             }]
                         ]
 
+                    },
+                    {
+
+                        "exceptionType":"NoSlot",
+                        "responses":[
+                            [{
+                                "responseType":"Text",
+                                "text":"Unfortunately we didn't find any slot on {{UserSession.selectedDate}}. Please select some other date"
+                            }]
+                        ]
+
                     }
+                   
                 ]     
-            }  
+            },
+            { 
+                "entityTypesRequired":["builtin.datetimeV2.date"],
+                "responses":[
+                        [{
+                            "responseType":"DateSelection"
+                        }],
+                        [{
+                            "responseType":"Text",
+                            "text":"Checking availability..."
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
+                            "processingFunction":"CheckDatesAvailability"
+                        }],
+                        [{
+                            "responseType":"Text",
+                            "text":"At what time you want to book appointment"
+                        }]
+                       
+                ],
+                "exceptions":[
+                    {
+
+                        "exceptionType":"SlotNotAvailable",
+                        "responses":[
+                            [{
+                                "responseType":"Text",
+                                "text":"Unfortunately we didn't find any slot for {{UserSession.selectedDate}}"
+                            }],
+                            [{
+                                "responseType":"Text",
+                                "text":"Kindly choose the alternative date"
+                            }]
+                        ]
+
+                    },
+                    {
+
+                        "exceptionType":"NoSlot",
+                        "responses":[
+                            [{
+                                "responseType":"Text",
+                                "text":"Unfortunately we didn't find any slot on {{UserSession.selectedDate}}. Please select some other date"
+                            }]
+                        ]
+
+                    }
+                   
+                ]     
+            },
+            { 
+                "entityTypesRequired":["builtin.datetimeV2.time"],
+                "timeFilter" : "07:30-18:00",
+                "responses":[
+                        [{
+                            "responseType":"TimeSelection"
+                        }],
+                        [{
+                            "responseType":"Text",
+                            "text":"Checking time availability..."
+                        }],
+                        [{
+                            "responseType":"ApiGatewayJson",
+                            "processingFunction":"CheckTimeAvailability"
+                        }],
+                        [{
+                            "text":"proceed",
+                            "responseType":"Internal"
+                        }]
+                       
+                ],
+                "exceptions":[
+                    {
+
+                        "exceptionType":"SlotNotAvailable",
+                        "responses":[
+                            [{
+                                "responseType":"Text",
+                                "text":"Unfortunately we didn't find any slot for {{UserSession.selectedTime}}"
+                            }],
+                            [{
+                                "responseType":"Text",
+                                "text":"We are trying to find empty slots closest to your time. Please wait..."
+                            }],
+                            [{
+                                "responseType":"ApiGatewayJson",
+                                "processingFunction":"FindEmptySlots"
+                            }]
+                        ]
+
+                    },
+                    {
+
+                        "exceptionType":"NoSlot",
+                        "responses":[
+                            [{
+                                "responseType":"Text",
+                                "text":"Unfortunately we didn't find any slot on {{UserSession.selectedDate}}. Please select some other date"
+                            }]
+                        ]
+
+                    }
+                   
+                ]     
+            },
+            { 
+                
+                "responses":[
+                       
+                        [{
+                            "responseType":"Text",
+                            "text":"we appologize as we could not understand. "
+                        }]
+                       
+                ],
+                "exceptions":[
+                    {
+
+                        "exceptionType":"SlotNotAvailable",
+                        "responses":[
+                            [{
+                                "responseType":"Text",
+                                "text":"Unfortunately we didn't find any slot for {{UserSession.selectedDate}}"
+                            }],
+                            [{
+                                "responseType":"Text",
+                                "text":"Kindly choose ther alternative date"
+                            }]
+                        ]
+
+                    }
+                   
+                ]     
+            } 
         ]
        
     },

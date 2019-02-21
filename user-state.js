@@ -2,6 +2,7 @@ const
     userConversation = require('./user-conversation'),
     orchestra = require('./orchestra'),
     serviceMappings = require('./service-mapping.js'),
+    util = require('./util'),
     logger = require('./winstonlogger')(__filename);
 
 const allServiceMappings = serviceMappings.loadAllMappings();
@@ -59,15 +60,83 @@ var collectUserState =  ((processData) => {
           }
           case 'DateTimeSelection':{
             logger.debug('intentFlow importance -> Appointment DateTime Selection');
-            let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
-            logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
-            let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
-            // let dateTime = entityMap.get("runtime.datetime.value");
-            if (dateTime !== undefined){
+            let ent = null;
+            if (processData.entityMap.get('builtin.datetimeV2.datetime') != null){
+                ent = processData.entityMap.get('builtin.datetimeV2.datetime');
+                if (ent != null){
+                    logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+                    let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
+
+                    if (ent.resolution.values.length > 1 && !util.isTimeInRange( util.separateDateTime(dateTime)[1],processData.selectedAction.timeFilter)){
+                        dateTime = ent.resolution.values[0].value;
+                    }
+
+
+                    // let dateTime = entityMap.get("runtime.datetime.value");
+                    if (dateTime !== undefined){
+                    
+                        let dateTimeArray = dateTime.split(' ');
+                        attributes.set("selectedDate",dateTimeArray[0]);
+                        if (dateTimeArray.length > 1)
+                            attributes.set("selectedTime",dateTimeArray[1]);
+                    }
+                }
+            } 
             
-              let dateTimeArray = dateTime.split(' ');
-              attributes.set("selectedDate",dateTimeArray[0]);
-              attributes.set("selectedTime",dateTimeArray[1]);
+                
+
+                
+            
+            
+            userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
+            resolve(true);
+            
+            break;
+          }
+          case 'DateSelection':{
+            logger.debug('intentFlow importance -> Appointment Date Selection');
+            let ent = null;
+            if (processData.entityMap.get('builtin.datetimeV2.date') != null){
+                ent = processData.entityMap.get('builtin.datetimeV2.date');
+                if (ent != null){
+                    logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+                    let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
+                    // let dateTime = entityMap.get("runtime.datetime.value");
+                    if (dateTime !== undefined){
+                    
+                        let dateTimeArray = dateTime.split(' ');
+                        attributes.set("selectedDate",dateTimeArray[0]);
+                        
+                    }
+                }
+            }
+            
+            userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
+            resolve(true);
+            
+            break;
+          }
+          case 'TimeSelection':{
+            logger.debug('intentFlow importance -> Appointment time Selection');
+            let ent = null;
+            if (processData.entityMap.get('builtin.datetimeV2.time') != null){
+                ent = processData.entityMap.get('builtin.datetimeV2.time');
+                if (ent != null){
+                    logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+                    let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
+
+                    if (ent.resolution.values.length > 1 && !util.isTimeInRange(dateTime,processData.selectedAction.timeFilter)){
+                        dateTime = ent.resolution.values[0].value;
+                    } 
+
+                    // let dateTime = entityMap.get("runtime.datetime.value");
+                    if (dateTime !== undefined){
+                    
+                        let dateTimeArray = dateTime.split(' ');
+                        attributes.set("selectedTime",dateTimeArray[0]);
+                        
+                    }
+                }
             }
             
             userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
@@ -103,6 +172,24 @@ var collectUserState =  ((processData) => {
                   attributes.set("customerOrchestraPublicId",processData.responseExecutionOutput.publicId);
                 }
                 break;
+              }
+              case 'FindEmptySlots':{
+               
+                let ent = processData.entityMap.get('builtin.datetimeV2.datetime');
+                logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
+                let dateTime = ent.resolution.values[ent.resolution.values.length - 1].value;
+                // let dateTime = entityMap.get("runtime.datetime.value");
+                if (dateTime !== undefined){
+                
+                  let dateTimeArray = dateTime.split(' ');
+                  attributes.set("selectedDate",dateTimeArray[0]);
+                  attributes.set("requetedTime",dateTimeArray[1]);
+                  attributes.set("selectedTime",'');
+                  
+                }
+                
+                userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);
+                resolve(true);
               }
               
             }
