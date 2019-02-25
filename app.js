@@ -21,6 +21,7 @@ const
   flow = require('./flow'),
   luis = require('./luis'),
   facebook = require('./facebook'),
+  notifier = require('./notifier'),
   globalObjectsFactory = require('./global-objects'),
   requestProcessor = require('./request-processor'),
   logger = require('./winstonlogger')(__filename);
@@ -1020,6 +1021,7 @@ function callSendAPI(messageData) {
 // certificate authority.
 app.listen(app.get('port'), function() {
   logger.debug('Node app is running on port', app.get('port'));
+  setInterval(notifier.process,5*60*1000);
 });
 
 module.exports = app;

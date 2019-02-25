@@ -43,7 +43,7 @@ var process = (params) => {
 
             logger.debug("LastConversation",lastConversation);
 
-            if (params.utterance == 'reset'){
+            if (params.utterance != null && params.utterance.toLowerCase() == 'reset'){
                 if (lastConversation != undefined){
                     userConversation.clearUserConversation();
 
@@ -79,7 +79,7 @@ var process = (params) => {
 
 var utteranceFormatter = (utterance,lastConversation) => {
     if (utterance != null 
-        && parseInt(utterance) != NaN
+        && !isNaN(parseInt(utterance))
         && lastConversation != null
         && lastConversation.activeUsecase != null
         && lastConversation.activeUsecase.attributes != null

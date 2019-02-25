@@ -372,7 +372,9 @@ var processingApiGatewayJsonResponse =  ( (processData) => {
           createAppointmentImage(appointmentDetails,processData.requestParams).then((imageURL) => {
             logger.debug("image URL " + imageURL);
             facebook.sendTextMessage(processData.requestParams.userId,"Your appointment is created successfully with id " + appointmentDetails.appointment.qpId) ;
-            facebook.sendImageMessage(processData.requestParams.userId,imageURL)
+            facebook.sendImageMessage(processData.requestParams.userId,imageURL);
+            
+            //facebook.sendTextMessage(processData.requestParams.userId,"Here is how you can get to branch " + lastConversation.activeUsecase.attributes.selectedBranchGoogleMap) ;
             resolve(appointmentDetails);
           });
   
@@ -399,12 +401,12 @@ async function createAppointmentImage(appointmentDetails,params){
     let timeZoneStartTime = moment(appointmentDetails.appointment.start).tz(timezone);
     let timeZoneEndTime = moment(appointmentDetails.appointment.end).tz(timezone);
     logger.debug(timeZoneStartTime.format());
-    logger.debug(timeZoneStartTime.format('hh:mm'));
+    logger.debug(timeZoneStartTime.format('HH:mm'));
 
 
 
     template_content = template_content.replace('[SERVICE_NAME]',appointmentDetails.appointment.services[0].name);
-    template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('hh:mm') + ' - ' + timeZoneEndTime.format('hh:mm'));
+    template_content = template_content.replace('[TIME_SLOT]',timeZoneStartTime.format('HH:mm') + ' - ' + timeZoneEndTime.format('HH:mm'));
     let ld = timeZoneStartTime.localeData();
     template_content = template_content.replace('[DATE]',timeZoneStartTime.format('dddd, MMMM Do YYYY'));
     template_content = template_content.replace('[BRANCH_NAME]',appointmentDetails.appointment.branch.name);

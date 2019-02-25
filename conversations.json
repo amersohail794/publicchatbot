@@ -1,7 +1,37 @@
 [
   {
     "userId": "1697938176985929",
-    "lastIntent": "NewCustomer",
-    "lastIntentDateTime": "2019-02-21T18:07:44+04:00"
+    "lastIntent": "RenewVisaMedicalTest.AppointmentConfirmation.yes",
+    "lastIntentDateTime": "2019-02-24T15:19:35+04:00",
+    "activeUsecase": {
+      "attributes": {
+        "selectedService": "Medical Test For Visa",
+        "selectedServicePublicId": "cd94eaaeb0cf39c5f85e2c9f4ff59714d1af85554e66e96612ba49f288974f3e",
+        "selectedServiceInternalId": "8",
+        "selectedBranchInternalId": "3",
+        "selectedBranchPublicId": "99594062952c58441139f1dc1fc56ff78476055bf6ab5abf5135f09fe32bc626",
+        "selectedBranchTimezone": "Asia/Dubai",
+        "selectedBranchAddressLine1": "Jmeirah Lake Towers – Red Diamond Building",
+        "selectedBranchGoogleMap": "https://goo.gl/maps/1ZHuckAYx1p",
+        "selectedBranchCity": "Dubai",
+        "selectedBranchCountry": "UAE",
+        "selectedDate": "2019-02-25",
+        "selectedTime": "15:00:00",
+        "customerOrchestraPublicId": "910544cffe87125d42d009b4e437fcd19dc2b64acfd6a8a6b1b052f4977623b9",
+        "appointmentConfirmationPublicId": "ac2a044a5bb33ca5234648e6de3fd9053fd05ae5dd1dff8a84a87361fab66334",
+        "status": "APPOINTMENT_CONFIRMED_FOR_MEDICAL_TEST"
+      },
+      "name": "RenewVisaMedicalTest",
+      "pendingSteps": [],
+      "followingUsecase": [
+        "RenewvisaAppSubmission"
+      ],
+      "completedSteps": [
+        "ServiceSelection",
+        "BranchSelection",
+        "DateTimeSelection",
+        "AppointmentConfirmation"
+      ]
+    }
   }
 ]

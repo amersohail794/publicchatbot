@@ -43,6 +43,7 @@ var collectUserState =  ((processData) => {
               attributes.set('selectedBranchPublicId',branchDetail.branch.publicId);
               attributes.set('selectedBranchTimezone',branchDetail.branch.timeZone);
               attributes.set('selectedBranchAddressLine1',branchDetail.branch.addressLine1);
+              attributes.set('selectedBranchGoogleMap',branchDetail.branch.addressLine2);
               attributes.set('selectedBranchCity',branchDetail.branch.addressCity);
               attributes.set('selectedBranchCountry',branchDetail.branch.addressCountry);
              
@@ -119,7 +120,7 @@ var collectUserState =  ((processData) => {
           case 'TimeSelection':{
             logger.debug('intentFlow importance -> Appointment time Selection');
             let ent = null;
-            if (processData.entityMap.get('builtin.datetimeV2.time') != null){
+            if (processData.entityMap != null && processData.entityMap.get('builtin.datetimeV2.time') != null){
                 ent = processData.entityMap.get('builtin.datetimeV2.time');
                 if (ent != null){
                     logger.debug("entity -> " + JSON.stringify(ent,undefined,2));
@@ -137,6 +138,10 @@ var collectUserState =  ((processData) => {
                         
                     }
                 }
+            }
+            else if (processData.requestParams.quickReply != null){
+                let appointmentTime = processData.requestParams.utterance;
+                attributes.set("selectedTime",appointmentTime);
             }
             
             userConversation.saveUserConversation(processData.requestParams.userId,processData.intentFlow,attributes);

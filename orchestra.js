@@ -16,6 +16,7 @@ const properties = {
     APPOINTMENT_DETAIL: 'rest/calendar-backend/api/v1/appointments/publicid/{{APPOINTMENT_PUBLIC_ID}}',
     SEARCH_CUSTOMER : 'rest/calendar-backend/api/v1/customers/search/?externalId={{EXTERNAL_ID}}',
     CREATE_CUSTOMER : 'rest/calendar-backend/api/v1/customers',
+    SEARCH_CALENDAR_APPOINTMENT : 'rest/calendar-backend/api/v1/appointments/search?start={{FROM_DATETIME}}&end={{TO_DATETIME}}'
 }
 //geo/services/7/nearestbranches?latitude=25.077265790923&longitude=55.150239192244&maxNrOfBranches=4
 // http://127.0.0.1:9090/rest/calendar-backend/api/v1/branches/1
@@ -61,6 +62,11 @@ var connectionDetails = (dataType) => {
         }
         case 'CREATE_CUSTOMER':{
             url = properties.API_GATEWAY_URL + properties.CREATE_CUSTOMER;
+            userId = properties.CALENDAR_USER_ID;
+            break;
+        }
+        case 'SEARCH_CALENDAR_APPOINTMENT':{
+            url = properties.API_GATEWAY_URL + properties.SEARCH_CALENDAR_APPOINTMENT;
             userId = properties.CALENDAR_USER_ID;
             break;
         }

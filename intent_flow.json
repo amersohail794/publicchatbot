@@ -481,6 +481,27 @@
        
     },
     {
+        "intent":"RenewVisaMedicalTest.SelectedTime.[0-9]",
+        "usecase":"RenewVisaMedicalTest",
+        "stepName":"DateTimeSelection",
+        "actions":[
+            {
+            
+                "responses":[
+                        [{
+                            "responseType":"TimeSelection"
+                        }],
+                        [{
+                            "text":"proceed",
+                            "responseType":"Internal"
+                        }]
+                       
+                ]     
+            }  
+        ]
+       
+    },
+    {
         "intent":"RenewVisaMedicalTest.AppointmentConfirmation",
         "usecase":"RenewVisaMedicalTest",
         "stepName":"AppointmentConfirmation",
